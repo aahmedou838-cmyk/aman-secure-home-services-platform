@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +29,7 @@ export function ListingModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpen
     setLoading(true);
     try {
       await createListing({
-        category: category as any,
+        category,
         subcategory,
         title,
         description,
@@ -65,6 +65,11 @@ export function ListingModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpen
               <ShieldCheck className="w-8 h-8 text-aman-teal" />
               {success ? "تم النشر بنجاح" : "إضافة عرض جديد للمنصة"}
             </DialogTitle>
+            {!success && (
+              <DialogDescription className="text-muted-foreground text-lg font-medium mt-2">
+                أنشئ عرضاً جديداً لخدماتك أو منتجاتك في منطقة نواكشوط ليراه آلاف العملاء.
+              </DialogDescription>
+            )}
           </DialogHeader>
         </div>
         <div className="p-8 space-y-6">
@@ -92,7 +97,7 @@ export function ListingModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpen
                         key={key}
                         variant={category === key ? "default" : "outline"}
                         className={`h-16 rounded-2xl text-lg font-bold flex justify-center items-center ${category === key ? 'bg-aman-teal' : ''}`}
-                        onClick={() => setCategory(key as any)}
+                        onClick={() => setCategory(key as keyof typeof HIERARCHY)}
                       >
                         {val.label}
                       </Button>

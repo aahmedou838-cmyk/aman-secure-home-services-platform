@@ -18,7 +18,8 @@ export const createListing = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
     const user = await ctx.db.get(userId);
-    if (user?.role !== "provider") {
+    if (!user) throw new Error("User not found");
+    if (user.role !== "provider") {
       await ctx.db.patch(userId, { role: "provider" });
     }
     return await ctx.db.insert("providers_listings", {
@@ -53,8 +54,9 @@ export const getMyListings = query({
     if (!userId) return [];
     return await ctx.db
       .query("providers_listings")
-      .withIndex("by_providerId", (q) => q.eq("providerId", userId))
-      .filter((q) => q.eq(q.field("active"), true))
+      .withIndex("by_providerId_active", (q) => q.eq("providerId", userId).eq("active", true))
+      .order("desc")
+      .take(50)
       .collect();
   },
 });
@@ -65,6 +67,7 @@ export const getListingsByCategory = query({
       .query("providers_listings")
       .withIndex("by_category_active", (q) => q.eq("category", args.category).eq("active", true))
       .order("desc")
-      .take(50);
+      .take(50)
+      .collect();
   },
 });

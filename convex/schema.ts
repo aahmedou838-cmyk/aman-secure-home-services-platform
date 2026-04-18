@@ -32,7 +32,8 @@ const applicationTables = {
   })
   .index("by_providerId", ["providerId"])
   .index("by_category_active", ["category", "active"])
-  .index("by_subcategory_active", ["subcategory", "active"]),
+  .index("by_subcategory_active", ["subcategory", "active"])
+  .index("by_providerId_active", ["providerId", "active"]),
   notifications: defineTable({
     toUserId: v.id("users"),
     fromJobId: v.optional(v.id("jobs")),
