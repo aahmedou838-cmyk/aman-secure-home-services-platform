@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { PUZZLES_REGISTRY } from "../src/lib/gameConstants";
 export const listActiveQuests = query({
   args: {},
   handler: async (ctx) => {
@@ -82,12 +83,50 @@ export const claimDailyReward = mutation({
         streak: 1,
       });
     }
-    // Reward: XP based on streak
     const xpReward = 20;
     const newXp = player.xp + xpReward;
     const newLevel = Math.floor(newXp / 100) + 1;
     await ctx.db.patch(player._id, { xp: newXp, level: newLevel });
     return { xpGained: xpReward, leveledUp: newLevel > player.level };
+  },
+});
+export const submitPuzzle = mutation({
+  args: { puzzleId: v.string(), attempt: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!player) throw new Error("Player not found");
+    const puzzle = PUZZLES_REGISTRY[args.puzzleId];
+    if (!puzzle) throw new Error("اللغز غير موجود");
+    if (puzzle.solution === args.attempt) {
+      // Reward XP
+      const newXp = player.xp + puzzle.reward.xp;
+      const newLevel = Math.floor(newXp / 100) + 1;
+      await ctx.db.patch(player._id, { xp: newXp, level: newLevel });
+      // Reward Item
+      const existingItem = await ctx.db
+        .query("player_inventory")
+        .withIndex("by_player_item", (q) => q.eq("playerId", player._id).eq("itemKey", puzzle.reward.itemKey))
+        .unique();
+      if (existingItem) {
+        await ctx.db.patch(existingItem._id, { quantity: existingItem.quantity + 1 });
+      } else {
+        await ctx.db.insert("player_inventory", {
+          playerId: player._id,
+          itemKey: puzzle.reward.itemKey,
+          quantity: 1,
+        });
+      }
+      // Update solve counter on user
+      const user = await ctx.db.get(userId);
+      await ctx.db.patch(userId, { puzzles_solved: (user?.puzzles_solved ?? 0) + 1 });
+      return { success: true };
+    }
+    return { success: false };
   },
 });
 export const getSocialProfile = query({
@@ -129,38 +168,5 @@ export const acceptQuest = mutation({
       progress: 0,
       updatedAt: Date.now(),
     });
-  },
-});
-export const completeQuest = mutation({
-  args: { questId: v.string() },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-    const player = await ctx.db
-      .query("players")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
-    if (!player) throw new Error("Player not found");
-    const playerQuest = await ctx.db
-      .query("player_quests")
-      .withIndex("by_player_quest", (q) => q.eq("playerId", player._id).eq("questId", args.questId))
-      .unique();
-    if (!playerQuest || playerQuest.status === "completed") return;
-    const questDef = await ctx.db
-      .query("game_quests")
-      .withIndex("by_questId", (q) => q.eq("questId", args.questId))
-      .unique();
-    if (!questDef) throw new Error("Quest definition missing");
-    await ctx.db.patch(playerQuest._id, {
-      status: "completed",
-      updatedAt: Date.now(),
-    });
-    const newXp = player.xp + questDef.rewardXp;
-    const newLevel = Math.floor(newXp / 100) + 1;
-    await ctx.db.patch(player._id, {
-      xp: newXp,
-      level: newLevel,
-    });
-    return { xpGained: questDef.rewardXp, leveledUp: newLevel > player.level };
   },
 });

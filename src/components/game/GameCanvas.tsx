@@ -19,14 +19,29 @@ export function GameCanvas() {
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
   const [nearestNPC, setNearestNPC] = useState<NPC | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<Id<"players"> | null>(null);
-  const [transitioning] = useState(false);
-  // Sync initial player position
+  const [regionTransitioning, setRegionTransitioning] = useState(false);
+  // Parallax Particles
+  const particles = useMemo(() => {
+    return Array.from({ length: 30 }).map(() => ({
+      x: Math.random() * 2000,
+      y: Math.random() * 2000,
+      size: Math.random() * 2 + 1,
+      speed: Math.random() * 0.5 + 0.2
+    }));
+  }, []);
   useEffect(() => {
     if (player) {
-      setPos(player.position);
+      if (player.zoneId !== currentRegionId) {
+        setRegionTransitioning(true);
+        setTimeout(() => {
+          setPos(player.position);
+          setRegionTransitioning(false);
+        }, 500);
+      } else {
+        setPos(player.position);
+      }
     }
-  }, [player]);
-  // Movement loop
+  }, [player, currentRegionId]);
   useEffect(() => {
     let frameId: number;
     const move = () => {
@@ -41,16 +56,14 @@ export function GameCanvas() {
     frameId = requestAnimationFrame(move);
     return () => cancelAnimationFrame(frameId);
   }, [velocity]);
-  // Position updates to backend (throttled)
   useEffect(() => {
     const timer = setInterval(() => {
       if (Math.abs(velocity.x) > 0 || Math.abs(velocity.y) > 0) {
         updatePos({ x: pos.x, y: pos.y, zoneId: currentRegionId }).catch(console.error);
       }
-    }, 200); // 5Hz update rate is enough for sync
+    }, 200);
     return () => clearInterval(timer);
   }, [pos, velocity, updatePos, currentRegionId]);
-  // Interaction detection
   useEffect(() => {
     if (!regionData) return;
     const npcs = regionData.npcs;
@@ -65,7 +78,6 @@ export function GameCanvas() {
     });
     setNearestNPC(closest);
   }, [pos, regionData]);
-  // Stable Canvas Resize Handler
   const handleResize = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -77,7 +89,6 @@ export function GameCanvas() {
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [handleResize]);
-  // Render Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -88,22 +99,28 @@ export function GameCanvas() {
       const { width, height } = canvas;
       const camX = width / 2 - pos.x;
       const camY = height / 2 - pos.y;
-      // Clear/Background
-      ctx.fillStyle = currentRegionId === "starter_zone" ? "#0f172a" : "#1e3a8a";
+      ctx.fillStyle = currentRegionId === "starter_zone" ? "#0f172a" : currentRegionId === "library_region" ? "#2e1065" : "#1e3a8a";
       ctx.fillRect(0, 0, width, height);
+      // Parallax Layer (Distant Particles)
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
+      particles.forEach(p => {
+        const px = (p.x + camX * p.speed) % 2000;
+        const py = (p.y + camY * p.speed) % 2000;
+        ctx.beginPath();
+        ctx.arc(px < 0 ? px + 2000 : px, py < 0 ? py + 2000 : py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
       // Grid
       ctx.strokeStyle = "rgba(255,255,255,0.05)";
       ctx.lineWidth = 1;
       const gridSize = 100;
-      const startX = camX % gridSize;
-      const startY = camY % gridSize;
-      for (let x = startX; x < width; x += gridSize) {
+      for (let x = camX % gridSize; x < width; x += gridSize) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
       }
-      for (let y = startY; y < height; y += gridSize) {
+      for (let y = camY % gridSize; y < height; y += gridSize) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
       }
-      // Draw NPCs
+      // NPCs
       regionData?.npcs.forEach(npc => {
         const nx = npc.position.x + camX;
         const ny = npc.position.y + camY;
@@ -111,10 +128,24 @@ export function GameCanvas() {
         ctx.beginPath();
         ctx.arc(nx, ny, 25, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = npc.color;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
         ctx.fillStyle = "white";
         ctx.font = "bold 14px Cairo";
         ctx.textAlign = "center";
         ctx.fillText(npc.name, nx, ny - 35);
+      });
+      // Interactables
+      regionData?.interactables.forEach(obj => {
+        const ox = obj.position.x + camX;
+        const oy = obj.position.y + camY;
+        ctx.fillStyle = obj.type === 'puzzle' ? "#06b6d4" : "#f59e0b";
+        ctx.fillRect(ox - 15, oy - 15, 30, 30);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 10px Cairo";
+        ctx.fillText(obj.label, ox, oy - 25);
       });
       // Others
       others.forEach(other => {
@@ -130,7 +161,7 @@ export function GameCanvas() {
         ctx.textAlign = "center";
         ctx.fillText(other.nickname, ox, oy - 25);
       });
-      // Local Player (Always Center)
+      // Local Player
       ctx.fillStyle = "#0f766e";
       ctx.beginPath();
       ctx.arc(width / 2, height / 2, 22, 0, Math.PI * 2);
@@ -142,45 +173,34 @@ export function GameCanvas() {
     };
     renderFrame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(renderFrame);
-  }, [pos, others, player?.userId, currentRegionId, regionData]);
-  const handleCanvasClick = (e: React.MouseEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    const { width, height } = canvas;
-    const camX = width / 2 - pos.x;
-    const camY = height / 2 - pos.y;
-    others.forEach(other => {
-      if (other.userId === player?.userId) return;
-      const sx = other.position.x + camX;
-      const sy = other.position.y + camY;
-      const dist = Math.sqrt(Math.pow(sx - clickX, 2) + Math.pow(sy - clickY, 2));
-      if (dist < 30) {
-        setSelectedPlayerId(other._id);
-      }
-    });
-  };
+  }, [pos, others, player?.userId, currentRegionId, regionData, particles]);
   return (
     <div className="w-full h-full relative touch-none select-none">
       <canvas
         ref={canvasRef}
         className="block w-full h-full cursor-pointer"
-        onClick={handleCanvasClick}
       />
       <HUD />
       <Joystick onMove={setVelocity} />
-      {nearestNPC && <InteractionUI npc={nearestNPC} />}
+      <InteractionUI npc={nearestNPC} />
       {selectedPlayerId && (
         <SocialCard
           playerId={selectedPlayerId}
           onClose={() => setSelectedPlayerId(null)}
         />
       )}
-      {transitioning && (
-        <div className="fixed inset-0 bg-black z-[200] animate-in fade-in duration-500" />
-      )}
+      <AnimatePresence>
+        {regionTransitioning && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black z-[200] flex items-center justify-center"
+          >
+            <div className="w-16 h-16 border-4 border-aman-teal border-t-transparent rounded-full animate-spin" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

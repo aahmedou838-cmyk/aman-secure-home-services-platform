@@ -15,6 +15,17 @@ export interface GameItem {
   rarity: "common" | "rare" | "epic" | "legendary";
   icon: string;
 }
+export interface Puzzle {
+  id: string;
+  type: "code" | "shape";
+  title: string;
+  description: string;
+  solution: string;
+  reward: {
+    itemKey: string;
+    xp: number;
+  };
+}
 export const ITEMS_REGISTRY: Record<string, GameItem> = {
   ancient_scroll: {
     key: "ancient_scroll",
@@ -43,6 +54,44 @@ export const ITEMS_REGISTRY: Record<string, GameItem> = {
     description: "قد يفتح أحد الأبواب القديمة في الميناء.",
     rarity: "common",
     icon: "🔑",
+  },
+  library_key: {
+    key: "library_key",
+    name: "مفتاح المكتبة",
+    description: "مفتاح برونزي منقوش عليه رمز الكتاب المفتوح.",
+    rarity: "rare",
+    icon: "🗝️",
+  },
+  golden_ink: {
+    key: "golden_ink",
+    name: "حبر ذهبي",
+    description: "حبر لامع يستخدم لكتابة العقود التي لا تُنقض.",
+    rarity: "epic",
+    icon: "🖋️",
+  },
+};
+export const PUZZLES_REGISTRY: Record<string, Puzzle> = {
+  vault_lock: {
+    id: "vault_lock",
+    type: "code",
+    title: "قفل الخزنة القديمة",
+    description: "أدخل الكود السري المكون من 4 أرقام لفتح الخزنة.",
+    solution: "1960",
+    reward: {
+      itemKey: "ancient_scroll",
+      xp: 50,
+    },
+  },
+  archivist_riddle: {
+    id: "archivist_riddle",
+    type: "code",
+    title: "لغز أمين المكتبة",
+    description: "ما هو العام الذي شهد تأسيس نواكشوط الحديثة؟",
+    solution: "1958",
+    reward: {
+      itemKey: "golden_ink",
+      xp: 75,
+    },
   },
 };
 export const WORLD_DATA = {
@@ -98,6 +147,27 @@ export const WORLD_DATA = {
     ],
     interactables: [
       { id: "anchored_ship", type: "quest_object", position: { x: 1700, y: 1400 }, label: "سفينة راسية" }
+    ]
+  },
+  library_region: {
+    name: "مكتبة الهمسات",
+    requiredLevel: 5,
+    npcs: [
+      {
+        id: "archivist",
+        name: "أمين المكتبة المجهول",
+        position: { x: 1000, y: 1000 },
+        color: "#4c1d95",
+        dialogue: [
+          "الهمسات في هذه القاعة لا تكذب أبداً.",
+          "ابحث عن الكتاب الذي لا يحتوي على كلمات.",
+          "فقط من يعرف التاريخ يمكنه فتح الأسرار."
+        ],
+        questId: "library_mystery"
+      }
+    ],
+    interactables: [
+      { id: "vault_lock", type: "puzzle", position: { x: 1200, y: 800 }, label: "خزنة الهمسات" }
     ]
   }
 };

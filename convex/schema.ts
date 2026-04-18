@@ -12,6 +12,7 @@ const applicationTables = {
     phone: v.optional(v.string()),
     specialties: v.optional(v.array(v.string())),
     isVerified: v.optional(v.boolean()),
+    puzzles_solved: v.optional(v.number()),
   })
   .index("by_email", ["email"])
   .index("by_role", ["role"]),
