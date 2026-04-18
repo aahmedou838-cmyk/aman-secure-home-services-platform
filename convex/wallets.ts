@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 export const getWallet = query({
   args: {},
-  returns: v.union(v.object({ _id: v.id("wallets"), userId: v.id("users"), balance: v.number(), currency: v.optional(v.string()) }), v.null()),
+  returns: v.union(v.object({ _id: v.id("wallets"), userId: v.id("users"), balance: v.number(), currency: v.string() }), v.null()),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
@@ -72,7 +72,7 @@ export const topUp = mutation({
         balance: args.amount,
         currency: "MRU",
       });
-      wallet = await ctx.db.get(walletId);
+      wallet = await ctx.db.get(walletId)!;
     } else {
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
@@ -113,7 +113,7 @@ export const creditFunds = internalMutation({
         balance: args.amount,
         currency: "MRU",
       });
-      wallet = await ctx.db.get(walletId);
+      wallet = await ctx.db.get(walletId)!;
     } else {
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
