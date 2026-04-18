@@ -24,27 +24,24 @@ export default function ClientDashboard() {
     }
   }, [user, wallet, ensureWallet]);
 const handleRequestService = async () => {
-  console.log('🔥 Button Clicked - handleRequestService called');
-  console.log('💰 Wallet check:', { wallet: !!wallet, balance: wallet?.balance, sufficient: wallet && wallet.balance >= 200 });
   if (!wallet || wallet.balance < 200) {
       toast.error("رصيدك لا يكفي لرسوم المعاينة (200 أ.م)");
       return;
     }
+    const id = toast.loading("جاري الطلب...");
     setLoading(true);
   try {
-    console.log('🚀 Attempting to create job with serviceType: سباكة - كشف تسربات, inspectionFee: 200');
     await createJob({
       serviceType: "سباكة - كشف تسربات",
       inspectionFee: 200,
     });
-      toast.success("تم طلب المعاينة بنجاح");
+    toast.success("تم طلب المعاينة بنجاح", { id });
   } catch (error: any) {
-    console.log('❌ Job creation error:', error);
-    toast.error(error.message || "فشل في طلب الخدمة");
-    } finally {
-      setLoading(false);
-    }
-  };
+    toast.error(error.message || "فشل في طلب الخدمة", { id });
+  } finally {
+    setLoading(false);
+  }
+};
   const handleApproveQuote = async (jobId: any, amount: number) => {
     if (!wallet || wallet.balance < amount) {
       toast.error("رصيدك لا يكفي للموافقة على عرض السعر");
@@ -57,14 +54,18 @@ const handleRequestService = async () => {
       toast.error(error.message || "حدث خطأ أثناء الموافقة");
     }
   };
-  const calculateDistance = (workerLocation?: { lat: number, lng: number }) => {
-    if (!workerLocation) return 500;
-    const clientLoc = { lat: 18.0735, lng: -15.9582 }; // Nouakchott center
-    const dLat = Math.abs(clientLoc.lat - workerLocation.lat);
-    const dLng = Math.abs(clientLoc.lng - workerLocation.lng);
-    return Math.round((dLat + dLng) * 111139);
-  };
-  return (
+const calculateDistance = (workerLocation?: { lat: number, lng: number }) => {
+  if (!workerLocation) return 500;
+  const clientLoc = { lat: 18.0735, lng: -15.9582 }; // Nouakchott center
+  const dLat = Math.abs(clientLoc.lat - workerLocation.lat);
+  const dLng = Math.abs(clientLoc.lng - workerLocation.lng);
+  return Math.round((dLat + dLng) * 111139);
+};
+
+const isDisabled = loading || !wallet || !wallet.balance || wallet.balance < 200;
+const isLowBalance = !!wallet && (!wallet.balance || wallet.balance < 200);
+
+return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-12 space-y-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -72,10 +73,25 @@ const handleRequestService = async () => {
             <h1 className="text-3xl font-bold">مرحباً بك</h1>
             <p className="text-muted-foreground">تحكم بطلباتك وأموالك في أمان - نواكشوط</p>
           </div>
-          <Button onClick={handleRequestService} disabled={loading} className="rounded-2xl h-12 px-6 gap-2 bg-aman-teal hover:bg-aman-teal/90">
-            <Plus className="w-5 h-5" />
-            طلب خدمة جديدة
-          </Button>
+          {isLowBalance ? (
+            <Button
+              variant="outline"
+              onClick={handleRequestService}
+              disabled={isDisabled}
+              className="rounded-2xl h-12 px-6 text-muted-foreground"
+            >
+              رصيد غير كافٍ (تحتاج 200+ أ.م)
+            </Button>
+          ) : (
+            <Button
+              onClick={handleRequestService}
+              disabled={isDisabled}
+              className="rounded-2xl h-12 px-6 gap-2 bg-aman-teal hover:bg-aman-teal/90"
+            >
+              <Plus className="w-5 h-5" />
+              طلب خدمة جديدة
+            </Button>
+          )}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
