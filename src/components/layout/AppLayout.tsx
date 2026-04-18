@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { Button } from "@/components/ui/button";
 function NavContent() {
   const { pathname } = useLocation();
   const { isAuthenticated, isLoading } = useConvexAuth();

@@ -5,8 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, Check, Briefcase, Wallet, Shield, Clock, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Bell, Check, Briefcase, Wallet, Shield, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 export function NotificationCenter() {
@@ -18,6 +17,7 @@ export function NotificationCenter() {
       case "new_request": return <Briefcase className="w-4 h-4 text-aman-teal" />;
       case "accepted": return <Shield className="w-4 h-4 text-aman-navy" />;
       case "quote_received": return <Wallet className="w-4 h-4 text-aman-amber" />;
+      case "system": return <Shield className="w-4 h-4 text-aman-navy" />;
       default: return <Bell className="w-4 h-4 text-muted-foreground" />;
     }
   };
@@ -51,12 +51,12 @@ export function NotificationCenter() {
           {isLoading ? (
             <div className="p-4 space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-3">
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-3 w-1/2" />
-                    <Skeleton className="h-2 w-full" />
+                <div key={i} className="flex gap-3 justify-end">
+                  <div className="space-y-2 flex-1 text-right">
+                    <Skeleton className="h-3 w-1/2 ml-auto" />
+                    <Skeleton className="h-2 w-full ml-auto" />
                   </div>
+                  <Skeleton className="h-8 w-8 rounded-full" />
                 </div>
               ))}
             </div>
@@ -70,19 +70,19 @@ export function NotificationCenter() {
               {notifications.map((n) => (
                 <div
                   key={n._id}
-                  className="p-4 border-b hover:bg-muted/50 cursor-pointer transition-colors group relative"
+                  className="p-4 border-b hover:bg-muted/50 cursor-pointer transition-colors group relative text-right"
                   onClick={() => void markRead({ notificationId: n._id })}
                 >
-                  <div className="flex gap-3">
-                    <div className="mt-1">{getIcon(n.type)}</div>
+                  <div className="flex gap-3 justify-end">
                     <div className="space-y-1 flex-1">
                       <p className="text-xs font-bold leading-tight">{n.title}</p>
                       <p className="text-[10px] text-muted-foreground line-clamp-2">{n.body}</p>
-                      <div className="flex items-center gap-1 text-[8px] opacity-60 mt-1">
-                        <Clock className="w-3 h-3" />
+                      <div className="flex items-center gap-1 text-[8px] opacity-60 mt-1 justify-end">
                         {formatDistanceToNow(n.createdAt, { addSuffix: true, locale: ar })}
+                        <Clock className="w-3 h-3" />
                       </div>
                     </div>
+                    <div className="mt-1">{getIcon(n.type)}</div>
                   </div>
                 </div>
               ))}
