@@ -1,12 +1,18 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Navigation, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 interface GpsRadarProps {
   status: string;
   isArrived: boolean;
-  distance?: number; // Simulated distance in meters
+  distance?: number;
+  lat?: number;
+  lng?: number;
 }
-export function GpsRadar({ status, isArrived, distance = 500 }: GpsRadarProps) {
+export function GpsRadar({ status, isArrived, distance = 500, lat, lng }: GpsRadarProps) {
+  // Logic to simulate positioning on the radar based on real coordinate drift
+  // Center is the client location
+  const offsetX = lng ? (lng - 46.6753) * 100000 : 0;
+  const offsetY = lat ? (lat - 24.7136) * 100000 : 0;
   return (
     <div className="relative w-full aspect-square max-w-[300px] mx-auto overflow-hidden bg-aman-navy/5 rounded-full border-2 border-aman-navy/10 flex items-center justify-center">
       {/* Background Radar Rings */}
@@ -49,19 +55,22 @@ export function GpsRadar({ status, isArrived, distance = 500 }: GpsRadarProps) {
           <motion.div
             key="moving"
             className="relative z-10 w-12 h-12 flex items-center justify-center"
-            animate={{ 
-              x: [20, -10, 5], 
-              y: [-30, 10, -5],
+            animate={{
+              x: Math.min(Math.max(offsetX, -100), 100),
+              y: Math.min(Math.max(offsetY, -100), 100),
               scale: distance < 100 ? 1.5 : 1
             }}
-            transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+            transition={{ type: "spring", stiffness: 50, damping: 10 }}
           >
             <div className="relative">
               <div className="w-4 h-4 bg-aman-teal rounded-full shadow-[0_0_15px_rgba(15,118,110,0.8)]" />
               <motion.div
                 className="absolute inset-0 bg-aman-teal rounded-full"
-                animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                animate={{ 
+                  scale: distance < 100 ? [1, 4] : [1, 2.5], 
+                  opacity: distance < 100 ? [0.8, 0] : [0.5, 0] 
+                }}
+                transition={{ duration: distance < 100 ? 0.8 : 1.5, repeat: Infinity }}
               />
             </div>
           </motion.div>

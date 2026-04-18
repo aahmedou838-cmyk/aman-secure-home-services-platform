@@ -5,7 +5,7 @@ import { GpsRadar } from "@/components/GpsRadar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Clock, CheckCircle2, Wallet, Shield, AlertCircle, History } from "lucide-react";
+import { Plus, Clock, CheckCircle2, Wallet, Shield, AlertCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { WalletTopUp } from "@/components/WalletTopUp";
 import { JobHistory } from "@/components/JobHistory";
@@ -52,6 +52,15 @@ export default function ClientDashboard() {
       toast.error(error.message || "حدث خطأ أثناء الموافقة");
     }
   };
+  // Distance helper (Mocked baseline)
+  const calculateDistance = (workerLocation?: { lat: number, lng: number }) => {
+    if (!workerLocation) return 500;
+    // Simple Euclidean distance simulation for web MVP
+    const clientLoc = { lat: 24.7136, lng: 46.6753 };
+    const dLat = Math.abs(clientLoc.lat - workerLocation.lat);
+    const dLng = Math.abs(clientLoc.lng - workerLocation.lng);
+    return Math.round((dLat + dLng) * 111139); // Approx meters
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-12 space-y-10">
@@ -88,10 +97,13 @@ export default function ClientDashboard() {
                               <span className="text-[10px] font-bold text-aman-teal bg-aman-teal/10 px-2 py-0.5 rounded uppercase">رقم {job._id.slice(-6)}</span>
                               <h3 className="text-xl font-bold mt-1">{job.serviceType}</h3>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                               <Clock className="w-4 h-4" />
                               <span>{new Date(job.createdAt).toLocaleDateString("ar-SA")}</span>
-                              <span className="font-bold text-aman-teal">الحالة: {job.status}</span>
+                              <div className="flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-aman-teal animate-pulse" />
+                                <span className="font-bold text-aman-teal uppercase tracking-widest text-[10px]">{job.status}</span>
+                              </div>
                             </div>
                             {job.status === "quote_pending" && job.quoteAmount && (
                               <div className="p-5 bg-aman-navy/5 rounded-2xl border border-aman-navy/10 space-y-3">
@@ -99,10 +111,22 @@ export default function ClientDashboard() {
                                 <Button onClick={() => handleApproveQuote(job._id, job.quoteAmount!)} className="w-full rounded-xl bg-aman-teal">الموافقة وبدء العمل</Button>
                               </div>
                             )}
+                            {job.workerLocation && (
+                              <div className="flex items-center gap-2 text-xs text-aman-teal bg-aman-teal/5 p-3 rounded-xl border border-aman-teal/10">
+                                <MapPin className="w-4 h-4" />
+                                <span>موقع الفني محدث الآن: حي النخيل</span>
+                              </div>
+                            )}
                           </div>
                           {["en_route", "arrived"].includes(job.status) && (
                             <div className="flex-shrink-0 w-full md:w-64">
-                              <GpsRadar status={job.status === "en_route" ? "الفني في الطريق" : "وصل الفني"} isArrived={job.status === "arrived"} distance={240} />
+                              <GpsRadar 
+                                status={job.status === "en_route" ? "الفني في الطريق" : "وصل الفني"} 
+                                isArrived={job.status === "arrived"} 
+                                distance={calculateDistance(job.workerLocation)}
+                                lat={job.workerLocation?.lat}
+                                lng={job.workerLocation?.lng}
+                              />
                             </div>
                           )}
                         </div>

@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, CheckCircle, Briefcase, Wallet, TrendingUp, History, PieChart } from "lucide-react";
+import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, Briefcase, Wallet, TrendingUp, History, PieChart, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { JobHistory } from "@/components/JobHistory";
@@ -19,11 +19,27 @@ export default function WorkerDashboard() {
   const updateStatus = useMutation(api.jobs.updateJobStatus);
   const completeJob = useMutation(api.jobs.completeJob);
   const submitQuote = useMutation(api.jobs.submitQuote);
+  const updateLocation = useMutation(api.jobs.updateWorkerLocation);
   const [sosTriggered, setSosTriggered] = useState(false);
   const [locationSharing, setLocationSharing] = useState(true);
   const [quoteAmount, setQuoteAmount] = useState("");
   const [activeTab, setActiveTab] = useState("available");
   const currentJob = myJobs[0];
+  // GPS Heartbeat Simulation (Smart Refresh Rate: 10s)
+  useEffect(() => {
+    if (!currentJob || currentJob.status !== "en_route" || !locationSharing) return;
+    const interval = setInterval(() => {
+      // Simulate movement towards a destination (drifting)
+      const newLat = (currentJob.workerLocation?.lat ?? 24.7136) + (Math.random() - 0.5) * 0.001;
+      const newLng = (currentJob.workerLocation?.lng ?? 46.6753) + (Math.random() - 0.5) * 0.001;
+      updateLocation({
+        jobId: currentJob._id,
+        lat: newLat,
+        lng: newLng,
+      }).catch(console.error);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [currentJob?._id, currentJob?.status, locationSharing]);
   const analytics = useMemo(() => {
     const totalEarned = historyJobs.reduce((acc, job) => acc + (job.quoteAmount ?? 0), 0);
     const totalCommission = transactions
@@ -40,8 +56,8 @@ export default function WorkerDashboard() {
       try {
         await triggerSOS({
           jobId: currentJob?._id,
-          lat: 24.7136,
-          lng: 46.6753
+          lat: currentJob?.workerLocation?.lat ?? 24.7136,
+          lng: currentJob?.workerLocation?.lng ?? 46.6753
         });
         toast.error("تم إرسال نداء الاستغاثة بنجاح. ابق في مكان آمن.");
       } catch (e) {
@@ -111,6 +127,12 @@ export default function WorkerDashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+        {currentJob?.penaltyTier && (
+          <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-2xl flex items-center gap-3 text-destructive animate-in fade-in slide-in-from-top-4">
+            <AlertCircle className="w-5 h-5" />
+            <p className="font-bold">تنبيه: تم تطبيق مخالفة من المستوى {currentJob.penaltyTier} على حسابك.</p>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <h1 className="text-3xl font-bold">لوحة تحكم الفني</h1>
@@ -195,6 +217,12 @@ export default function WorkerDashboard() {
                     <div className="p-6 bg-muted rounded-[2rem] space-y-4">
                       <div className="flex items-center gap-3"><MapPin className="w-5 h-5 text-aman-teal" /><span className="font-bold">موقع العميل: الرياض</span></div>
                       <div className="flex items-center gap-3"><AlertCircle className="w-5 h-5 text-aman-teal" /><span>{currentJob.serviceType}</span></div>
+                      {currentJob.workerLocation && (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>تحديث GPS: {new Date(currentJob.workerLocation.lastUpdated).toLocaleTimeString()}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <Button disabled={currentJob.status !== "en_route"} onClick={() => handleStatusUpdate(currentJob._id, "arrived")} className="rounded-xl">تأكيد الوصول</Button>

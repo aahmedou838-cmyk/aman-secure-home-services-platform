@@ -38,6 +38,52 @@ export const acceptJob = mutation({
     await ctx.db.patch(args.jobId, {
       workerId: userId,
       status: "en_route",
+      workerLocation: {
+        lat: 24.7136,
+        lng: 46.6753,
+        lastUpdated: Date.now(),
+      }
+    });
+  },
+});
+export const updateWorkerLocation = mutation({
+  args: {
+    jobId: v.id("jobs"),
+    lat: v.number(),
+    lng: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    const job = await ctx.db.get(args.jobId);
+    if (!job || job.workerId !== userId) throw new Error("Unauthorized");
+    await ctx.db.patch(args.jobId, {
+      workerLocation: {
+        lat: args.lat,
+        lng: args.lng,
+        lastUpdated: Date.now(),
+      }
+    });
+  },
+});
+export const applyPenalty = mutation({
+  args: {
+    jobId: v.id("jobs"),
+    tier: v.number(),
+    reason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const job = await ctx.db.get(args.jobId);
+    if (!job || !job.workerId) throw new Error("Job or worker not found");
+    const penaltyAmount = args.tier * 25; // Simple logic: Tier 1 = 25, Tier 2 = 50...
+    await ctx.runMutation(internal.wallets.deductFunds, {
+      userId: job.workerId,
+      amount: penaltyAmount,
+      type: "penalty",
+      description: `مخالفة (مستوى ${args.tier}): ${args.reason}`,
+    });
+    await ctx.db.patch(args.jobId, {
+      penaltyTier: args.tier,
     });
   },
 });
@@ -71,7 +117,6 @@ export const completeJob = mutation({
     if (job.status !== "in_progress") throw new Error("Job must be in progress to complete");
     if (!job.quoteAmount) throw new Error("Quote must be approved first");
     await ctx.db.patch(args.jobId, { status: "completed" });
-    // Process payout split
     await ctx.runMutation(internal.wallets.processPayout, {
       jobId: args.jobId,
       workerId: userId,

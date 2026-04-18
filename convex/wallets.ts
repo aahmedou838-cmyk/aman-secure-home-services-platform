@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 export const getWallet = query({
   args: {},
   handler: async (ctx) => {
@@ -75,11 +76,11 @@ export const topUp = mutation({
   },
 });
 export const creditFunds = internalMutation({
-  args: { 
-    userId: v.id("users"), 
-    amount: v.number(), 
-    description: v.string(), 
-    type: v.union(v.literal("deposit"), v.literal("payout")) 
+  args: {
+    userId: v.id("users"),
+    amount: v.number(),
+    description: v.string(),
+    type: v.union(v.literal("deposit"), v.literal("payout"))
   },
   handler: async (ctx, args) => {
     let wallet = await ctx.db
@@ -111,11 +112,11 @@ export const creditFunds = internalMutation({
   },
 });
 export const deductFunds = internalMutation({
-  args: { 
-    userId: v.id("users"), 
-    amount: v.number(), 
-    description: v.string(), 
-    type: v.union(v.literal("payment"), v.literal("penalty"), v.literal("commission")) 
+  args: {
+    userId: v.id("users"),
+    amount: v.number(),
+    description: v.string(),
+    type: v.union(v.literal("payment"), v.literal("penalty"), v.literal("commission"))
   },
   handler: async (ctx, args) => {
     const wallet = await ctx.db
@@ -139,10 +140,10 @@ export const deductFunds = internalMutation({
   },
 });
 export const processPayout = internalMutation({
-  args: { 
-    jobId: v.id("jobs"), 
-    workerId: v.id("users"), 
-    amount: v.number() 
+  args: {
+    jobId: v.id("jobs"),
+    workerId: v.id("users"),
+    amount: v.number()
   },
   handler: async (ctx, args) => {
     const COMMISSION_RATE = 0.15;
@@ -150,14 +151,12 @@ export const processPayout = internalMutation({
     const commission = args.amount * COMMISSION_RATE;
     const insurance = args.amount * INSURANCE_RATE;
     const netPayout = args.amount - commission - insurance;
-    // Credit net amount to worker
     await ctx.runMutation(internal.wallets.creditFunds, {
       userId: args.workerId,
       amount: netPayout,
       type: "payout",
       description: `دفعة مستحقة للمهمة رقم: ${args.jobId.slice(-6)}`,
     });
-    // Record system deductions in transactions for audit (can be expanded to a central platform wallet)
     const wallet = await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", args.workerId))
@@ -174,7 +173,7 @@ export const processPayout = internalMutation({
       await ctx.db.insert("wallet_transactions", {
         walletId: wallet._id,
         userId: args.workerId,
-        type: "commission", // Using commission type for simplicity or could add 'insurance_fee'
+        type: "commission",
         amount: insurance,
         description: "صندوق تأمين الفنيين (2%)",
         timestamp: Date.now(),
