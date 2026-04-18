@@ -1,26 +1,29 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { motion, AnimatePresence } from "framer-motion";
 import { Joystick } from "./Joystick";
 import { HUD } from "./HUD";
 import { WORLD_DATA, NPC } from "@/lib/gameConstants";
 import { InteractionUI } from "./InteractionUI";
 import { SocialCard } from "./SocialCard";
-import { Id } from "@convex/_generated/dataModel";
+import { WhisperUI } from "./WhisperUI";
+import { Id, Doc } from "@convex/_generated/dataModel";
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const player = useQuery(api.players.getMe);
   const currentRegionId = player?.zoneId || "starter_zone";
   const regionData = WORLD_DATA[currentRegionId as keyof typeof WORLD_DATA];
   const rawOthers = useQuery(api.players.getActivePlayers, { zoneId: currentRegionId });
+  const whispers = useQuery(api.game.getWhispers, { zoneId: currentRegionId }) ?? [];
   const others = useMemo(() => rawOthers ?? [], [rawOthers]);
   const updatePos = useMutation(api.players.updatePosition);
   const [pos, setPos] = useState({ x: 500, y: 500 });
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
   const [nearestNPC, setNearestNPC] = useState<NPC | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<Id<"players"> | null>(null);
+  const [selectedWhisper, setSelectedWhisper] = useState<Doc<"whispering_stones"> | null>(null);
   const [regionTransitioning, setRegionTransitioning] = useState(false);
-  // Parallax Particles
   const particles = useMemo(() => {
     return Array.from({ length: 30 }).map(() => ({
       x: Math.random() * 2000,
@@ -101,7 +104,6 @@ export function GameCanvas() {
       const camY = height / 2 - pos.y;
       ctx.fillStyle = currentRegionId === "starter_zone" ? "#0f172a" : currentRegionId === "library_region" ? "#2e1065" : "#1e3a8a";
       ctx.fillRect(0, 0, width, height);
-      // Parallax Layer (Distant Particles)
       ctx.fillStyle = "rgba(255,255,255,0.1)";
       particles.forEach(p => {
         const px = (p.x + camX * p.speed) % 2000;
@@ -110,7 +112,6 @@ export function GameCanvas() {
         ctx.arc(px < 0 ? px + 2000 : px, py < 0 ? py + 2000 : py, p.size, 0, Math.PI * 2);
         ctx.fill();
       });
-      // Grid
       ctx.strokeStyle = "rgba(255,255,255,0.05)";
       ctx.lineWidth = 1;
       const gridSize = 100;
@@ -120,7 +121,18 @@ export function GameCanvas() {
       for (let y = camY % gridSize; y < height; y += gridSize) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
       }
-      // NPCs
+      // Whispering Stones (Runes)
+      whispers.forEach(stone => {
+        const sx = stone.position.x + camX;
+        const sy = stone.position.y + camY;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#06b6d4";
+        ctx.fillStyle = "rgba(6, 182, 212, 0.6)";
+        ctx.beginPath();
+        ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
       regionData?.npcs.forEach(npc => {
         const nx = npc.position.x + camX;
         const ny = npc.position.y + camY;
@@ -137,7 +149,6 @@ export function GameCanvas() {
         ctx.textAlign = "center";
         ctx.fillText(npc.name, nx, ny - 35);
       });
-      // Interactables
       regionData?.interactables.forEach(obj => {
         const ox = obj.position.x + camX;
         const oy = obj.position.y + camY;
@@ -147,7 +158,6 @@ export function GameCanvas() {
         ctx.font = "bold 10px Cairo";
         ctx.fillText(obj.label, ox, oy - 25);
       });
-      // Others
       others.forEach(other => {
         if (other.userId === player?.userId) return;
         const ox = other.position.x + camX;
@@ -161,7 +171,6 @@ export function GameCanvas() {
         ctx.textAlign = "center";
         ctx.fillText(other.nickname, ox, oy - 25);
       });
-      // Local Player
       ctx.fillStyle = "#0f766e";
       ctx.beginPath();
       ctx.arc(width / 2, height / 2, 22, 0, Math.PI * 2);
@@ -173,7 +182,7 @@ export function GameCanvas() {
     };
     renderFrame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(renderFrame);
-  }, [pos, others, player?.userId, currentRegionId, regionData, particles]);
+  }, [pos, others, whispers, player?.userId, currentRegionId, regionData, particles]);
   return (
     <div className="w-full h-full relative touch-none select-none">
       <canvas
@@ -182,18 +191,28 @@ export function GameCanvas() {
       />
       <HUD />
       <Joystick onMove={setVelocity} />
-      <InteractionUI npc={nearestNPC} />
+      <InteractionUI 
+        npc={nearestNPC} 
+        onReadWhisper={(whisper) => setSelectedWhisper(whisper)}
+      />
       {selectedPlayerId && (
         <SocialCard
           playerId={selectedPlayerId}
           onClose={() => setSelectedPlayerId(null)}
         />
       )}
+      {selectedWhisper && (
+        <WhisperUI 
+          readOnly 
+          whisper={selectedWhisper} 
+          onClose={() => setSelectedWhisper(null)} 
+        />
+      )}
       <AnimatePresence>
         {regionTransitioning && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black z-[200] flex items-center justify-center"
           >

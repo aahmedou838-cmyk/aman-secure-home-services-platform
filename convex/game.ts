@@ -2,6 +2,52 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { PUZZLES_REGISTRY } from "../src/lib/gameConstants";
+export const getLeaderboard = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("players")
+      .order("desc")
+      .take(10);
+  },
+});
+export const leaveWhisper = mutation({
+  args: { 
+    message: v.string(),
+    position: v.object({ x: v.number(), y: v.number() }),
+    zoneId: v.string()
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!player) throw new Error("Player not found");
+    if (player.xp < 10) throw new Error("تحتاج إلى 10 XP لترك همسة");
+    await ctx.db.insert("whispering_stones", {
+      playerId: player._id,
+      nickname: player.nickname,
+      message: args.message,
+      position: args.position,
+      zoneId: args.zoneId,
+      createdAt: Date.now(),
+    });
+    await ctx.db.patch(player._id, { xp: player.xp - 10 });
+    return { success: true };
+  },
+});
+export const getWhispers = query({
+  args: { zoneId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("whispering_stones")
+      .withIndex("by_zone", (q) => q.eq("zoneId", args.zoneId))
+      .order("desc")
+      .take(30);
+  },
+});
 export const listActiveQuests = query({
   args: {},
   handler: async (ctx) => {
@@ -35,22 +81,6 @@ export const getPlayerInventory = query({
       .collect();
   },
 });
-export const getDailyRewardStatus = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
-    const player = await ctx.db
-      .query("players")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
-    if (!player) return null;
-    return await ctx.db
-      .query("daily_rewards")
-      .withIndex("by_player", (q) => q.eq("playerId", player._id))
-      .unique();
-  },
-});
 export const claimDailyReward = mutation({
   args: {},
   handler: async (ctx) => {
@@ -72,22 +102,31 @@ export const claimDailyReward = mutation({
         throw new Error(`يرجى الانتظار ${Math.ceil(24 - hoursSinceLast)} ساعة للمطالبة بالجائزة التالية`);
       }
       const newStreak = hoursSinceLast < 48 ? existing.streak + 1 : 1;
-      await ctx.db.patch(existing._id, {
-        lastClaimed: now,
-        streak: newStreak,
-      });
+      await ctx.db.patch(existing._id, { lastClaimed: now, streak: newStreak });
     } else {
-      await ctx.db.insert("daily_rewards", {
-        playerId: player._id,
-        lastClaimed: now,
-        streak: 1,
-      });
+      await ctx.db.insert("daily_rewards", { playerId: player._id, lastClaimed: now, streak: 1 });
     }
     const xpReward = 20;
     const newXp = player.xp + xpReward;
     const newLevel = Math.floor(newXp / 100) + 1;
     await ctx.db.patch(player._id, { xp: newXp, level: newLevel });
     return { xpGained: xpReward, leveledUp: newLevel > player.level };
+  },
+});
+export const getDailyRewardStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const player = await ctx.db
+      .query("players")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!player) return null;
+    return await ctx.db
+      .query("daily_rewards")
+      .withIndex("by_player", (q) => q.eq("playerId", player._id))
+      .unique();
   },
 });
 export const submitPuzzle = mutation({
@@ -103,11 +142,9 @@ export const submitPuzzle = mutation({
     const puzzle = PUZZLES_REGISTRY[args.puzzleId];
     if (!puzzle) throw new Error("اللغز غير موجود");
     if (puzzle.solution === args.attempt) {
-      // Reward XP
       const newXp = player.xp + puzzle.reward.xp;
       const newLevel = Math.floor(newXp / 100) + 1;
       await ctx.db.patch(player._id, { xp: newXp, level: newLevel });
-      // Reward Item
       const existingItem = await ctx.db
         .query("player_inventory")
         .withIndex("by_player_item", (q) => q.eq("playerId", player._id).eq("itemKey", puzzle.reward.itemKey))
@@ -115,13 +152,8 @@ export const submitPuzzle = mutation({
       if (existingItem) {
         await ctx.db.patch(existingItem._id, { quantity: existingItem.quantity + 1 });
       } else {
-        await ctx.db.insert("player_inventory", {
-          playerId: player._id,
-          itemKey: puzzle.reward.itemKey,
-          quantity: 1,
-        });
+        await ctx.db.insert("player_inventory", { playerId: player._id, itemKey: puzzle.reward.itemKey, quantity: 1 });
       }
-      // Update solve counter on user
       const user = await ctx.db.get(userId);
       await ctx.db.patch(userId, { puzzles_solved: (user?.puzzles_solved ?? 0) + 1 });
       return { success: true };

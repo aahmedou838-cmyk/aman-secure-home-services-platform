@@ -31,6 +31,18 @@ const applicationTables = {
   })
   .index("by_userId", ["userId"])
   .index("by_zone_active", ["zoneId", "lastActive"]),
+  whispering_stones: defineTable({
+    playerId: v.id("players"),
+    nickname: v.string(),
+    message: v.string(),
+    position: v.object({
+      x: v.number(),
+      y: v.number(),
+    }),
+    zoneId: v.string(),
+    createdAt: v.number(),
+  })
+  .index("by_zone", ["zoneId"]),
   player_inventory: defineTable({
     playerId: v.id("players"),
     itemKey: v.string(),

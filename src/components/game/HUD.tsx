@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Map, Star, ScrollText, User, Zap, Package, Gift, Save, Search } from "lucide-react";
+import { Map, Star, ScrollText, User, Zap, Package, Gift, Save, Search, Trophy, MessageCircle } from "lucide-react";
 import { Inventory } from "./Inventory";
 import { DailyRewards } from "./DailyRewards";
+import { LeaderboardUI } from "./LeaderboardUI";
+import { WhisperUI } from "./WhisperUI";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SignInForm } from "@/components/SignInForm";
 import { WORLD_DATA } from "@/lib/gameConstants";
@@ -15,6 +17,8 @@ export function HUD() {
   const [showInventory, setShowInventory] = useState(false);
   const [showDaily, setShowDaily] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showWhisper, setShowWhisper] = useState(false);
   const [showRegionBanner, setShowRegionBanner] = useState(false);
   const [lastRegion, setLastRegion] = useState("");
   useEffect(() => {
@@ -98,7 +102,7 @@ export function HUD() {
         </div>
       </div>
       {/* Top Right: Controls */}
-      <div className="absolute top-6 right-6 flex flex-col items-end gap-4">
+      <div className="absolute top-6 right-6 flex flex-col items-end gap-3">
         <div className="flex flex-col gap-2 pointer-events-auto">
           <button
             onClick={() => setShowInventory(true)}
@@ -113,9 +117,23 @@ export function HUD() {
             <Gift className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-aman-red rounded-full animate-pulse border-2 border-aman-navy" />
           </button>
+          <button
+            onClick={() => setShowLeaderboard(true)}
+            className="w-12 h-12 bg-aman-navy/80 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center text-white hover:bg-aman-teal transition-colors shadow-xl"
+          >
+            <Trophy className="w-6 h-6" />
+          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setShowWhisper(true)}
+              className="w-12 h-12 bg-aman-teal/80 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center text-white hover:bg-aman-teal transition-colors shadow-xl animate-in zoom-in"
+            >
+              <MessageCircle className="w-6 h-6" />
+            </button>
+          )}
         </div>
       </div>
-      {/* Bottom Left: Quest Tracker & Puzzle Stats */}
+      {/* Bottom Left: Quest Tracker */}
       <div className="absolute bottom-8 left-6 pointer-events-auto flex flex-col gap-4">
         <motion.div
           initial={{ x: -20, opacity: 0 }}
@@ -152,6 +170,8 @@ export function HUD() {
       <AnimatePresence>
         {showInventory && <Inventory onClose={() => setShowInventory(false)} />}
         {showDaily && <DailyRewards onClose={() => setShowDaily(false)} />}
+        {showLeaderboard && <LeaderboardUI onClose={() => setShowLeaderboard(false)} />}
+        {showWhisper && <WhisperUI onClose={() => setShowWhisper(false)} />}
       </AnimatePresence>
     </div>
   );
