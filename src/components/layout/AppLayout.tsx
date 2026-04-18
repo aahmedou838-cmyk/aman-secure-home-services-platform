@@ -2,13 +2,13 @@ import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Home, User, Briefcase, Wallet, Shield, Loader2, BadgeCheck } from "lucide-react";
 import { Authenticated, useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
 function NavContent() {
   const { pathname } = useLocation();
   const wallet = useQuery(api.wallets.getWallet);
-  const user = useQuery(api.users.currentUser);
+  const user = useQuery(api.profiles.currentUser);
   const navItems = [
     { label: "الرئيسية", path: "/", icon: Home },
     { label: "العميل", path: "/client-dashboard", icon: User },
@@ -25,8 +25,8 @@ function NavContent() {
                 <Shield className="w-6 h-6" />
               </div>
               <div className="hidden sm:block">
-                <span className="text-2xl font-black text-aman-teal">أمان</span>
-                <span className="text-xs block text-muted-foreground -mt-1 font-bold">موريتانيا</span>
+                <span className="text-2xl font-black text-aman-teal transition-all hover:tracking-wider">أمان</span>
+                <span className="text-xs block text-muted-foreground -mt-1 font-bold animate-pulse">موريتانيا</span>
               </div>
             </Link>
           </div>
@@ -43,7 +43,7 @@ function NavContent() {
                 </span>
               </div>
               {user?.role === "provider" && (
-                <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-aman-teal/10 rounded-full border border-aman-teal/20 text-aman-teal">
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-aman-teal/20 to-aman-amber/10 rounded-full border border-aman-teal/20 text-aman-teal shadow-inner">
                   <BadgeCheck className="w-4 h-4" />
                   <span className="text-[10px] font-black uppercase tracking-tighter">فني معتمد</span>
                 </div>

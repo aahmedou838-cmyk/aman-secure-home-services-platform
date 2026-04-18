@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +21,9 @@ export function ProviderRegistration({ isOpen, onOpenChange }: { isOpen: boolean
   const [phone, setPhone] = useState("");
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const becomeProvider = useMutation(api.users.becomeProvider);
+  const becomeProvider = useMutation(api.profiles.becomeProvider);
   const toggleSpecialty = (s: string) => {
-    setSelectedSpecialties(prev => 
+    setSelectedSpecialties(prev =>
       prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
     );
   };
@@ -33,7 +33,9 @@ export function ProviderRegistration({ isOpen, onOpenChange }: { isOpen: boolean
     setLoading(true);
     try {
       await becomeProvider({ phone, specialties: selectedSpecialties });
-      toast.success("تم التسجيل كمزود خدمة - ابدأ قبول المهام");
+      toast.success("تم إرسال طلب الانضمام بنجاح", {
+        description: "نقوم حالياً بمراجعة بياناتك لضمان أمان المنصة. يمكنك قبول المهام بعد 24 ساعة."
+      });
       onOpenChange(false);
     } catch (e: any) {
       toast.error(e.message || "فشل التسجيل");

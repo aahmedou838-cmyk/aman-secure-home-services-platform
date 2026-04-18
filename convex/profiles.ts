@@ -6,18 +6,7 @@ export const currentUser = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    const user = await ctx.db.get(userId);
-    if (!user) return null;
-    // Identify if the user is anonymous (guest)
-    // Anonymous users in Convex Auth usually lack an email/phone or specific providers
-    const isAnonymous = !user.email && !user.phone;
-    return {
-      ...user,
-      role: user.role ?? "client",
-      isVerified: user.isVerified ?? false,
-      specialties: user.specialties ?? [],
-      isAnonymous,
-    };
+    return await ctx.db.get(userId);
   },
 });
 export const updateProfile = mutation({

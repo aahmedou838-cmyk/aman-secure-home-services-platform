@@ -3,13 +3,20 @@ import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 const applicationTables = {
   users: defineTable({
+    // Auth fields (required for @convex-dev/auth integration)
     name: v.optional(v.string()),
     email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phoneVerificationTime: v.optional(v.number()),
     image: v.optional(v.string()),
+    // Custom Marketplace fields
     role: v.union(v.literal("client"), v.literal("provider")),
     phone: v.optional(v.string()),
     specialties: v.optional(v.array(v.string())),
-  }).index("by_role", ["role"]),
+    isVerified: v.optional(v.boolean()),
+  })
+  .index("by_email", ["email"])
+  .index("by_role", ["role"]),
   wallets: defineTable({
     userId: v.id("users"),
     balance: v.number(),

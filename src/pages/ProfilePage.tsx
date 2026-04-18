@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
@@ -38,7 +38,7 @@ export default function ProfilePage() {
         <SignOutButton />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="space-y-6">
+        <div className="space-y-8">
           <Card className="rounded-[2rem] border-none bg-aman-teal text-white shadow-xl overflow-hidden relative">
             {/* Using logical inset-inline-start-0 for RTL safety */}
             <div className="absolute top-0 inset-inline-start-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -ms-16 -mt-16" />
@@ -65,11 +65,17 @@ export default function ProfilePage() {
           <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-aman-amber/5 border-aman-amber/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-bold flex items-center gap-2 text-aman-amber">
-                <AlertTriangle className="w-4 h-4" />
-                نظام المخالفات
+                <Shield className="w-4 h-4" />
+                مستوى التحقق
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-green-600"><CheckCircle className="w-3 h-3" /> الهاتف مفعل</div>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-green-600"><CheckCircle className="w-3 h-3" /> التخصص مفحص</div>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground"><AlertTriangle className="w-3 h-3 text-aman-amber" /> رفع الهوية (مطلوب)</div>
+              </div>
+              <Separator className="bg-aman-amber/10" />
               <div className="flex justify-between items-center">
                 <span className="text-xs">المستوى الحالي:</span>
                 <span className="text-xs font-bold bg-aman-amber/20 px-2 py-0.5 rounded">آمن (1/5)</span>

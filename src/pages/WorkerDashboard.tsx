@@ -1,17 +1,17 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, Briefcase, Wallet, TrendingUp, PieChart, ShieldCheck, BadgeCheck, Star } from "lucide-react";
+import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, Briefcase, Wallet, TrendingUp, PieChart, ShieldCheck, BadgeCheck, Star, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { JobHistory } from "@/components/JobHistory";
 import { ProviderRegistration } from "@/components/ProviderRegistration";
 import { Badge } from "@/components/ui/badge";
 export default function WorkerDashboard() {
-  const user = useQuery(api.users.currentUser);
+  const user = useQuery(api.profiles.currentUser);
   const wallet = useQuery(api.wallets.getWallet);
   const triggerSOS = useMutation(api.sos.triggerSOS);
   // Use user specialties if they exist to filter available jobs
@@ -149,6 +149,11 @@ export default function WorkerDashboard() {
                     <CardHeader className="bg-aman-teal/5 pb-4">
                       <div className="flex justify-between items-start">
                         <Badge className="bg-aman-teal text-white">معاينة: {job.inspectionFee} أ.م</Badge>
+                        {user?.specialties?.includes(job.serviceType) && (
+                          <Badge variant="outline" className="border-aman-teal text-aman-teal animate-pulse">
+                            يطابق مهاراتك
+                          </Badge>
+                        )}
                         <span className="text-xs text-muted-foreground font-bold">{new Date(job.createdAt).toLocaleTimeString("ar-MR")}</span>
                       </div>
                       <CardTitle className="text-xl font-bold mt-2 text-rtl">{job.serviceType}</CardTitle>
@@ -282,6 +287,11 @@ export default function WorkerDashboard() {
                   <ShieldCheck className="w-10 h-10 text-aman-amber mx-auto mb-4" />
                   <p className="text-sm text-muted-foreground font-bold">مساهمات التأمين</p>
                   <p className="text-4xl font-bold text-aman-amber">{analytics.totalInsurance.toFixed(0)} أ.م</p>
+                </Card>
+                <Card className="rounded-3xl p-8 bg-gradient-to-br from-aman-teal to-aman-navy text-white text-center md:col-span-3">
+                  <Trophy className="w-12 h-12 text-aman-amber mx-auto mb-4" />
+                  <p className="text-lg opacity-80 font-bold">نقاط الثقة والاحترافية</p>
+                  <p className="text-5xl font-black">4.8 / 5.0</p>
                 </Card>
              </div>
              <Card className="rounded-3xl p-8">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { GpsRadar } from "@/components/GpsRadar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ export default function ClientDashboard() {
   const activeJobs = useQuery(api.jobs.listActiveJobs) ?? [];
   const historyJobs = useQuery(api.jobs.listHistoryJobs, { role: "client" }) ?? [];
   const wallet = useQuery(api.wallets.getWallet);
-  const user = useQuery(api.users.currentUser);
+  const user = useQuery(api.profiles.currentUser);
   const createJob = useMutation(api.jobs.createJob);
   const approveQuote = useMutation(api.jobs.approveQuote);
   const ensureWallet = useMutation(api.wallets.ensureWallet);
@@ -44,14 +44,17 @@ export default function ClientDashboard() {
       return;
     }
     setLoading(true);
-    const id = toast.loading("جاري إرسال الطلب لخبراء نواكشوط...");
+    const id = toast.loading("جاري فحص حالة الأمان وإرسال الطلب...");
     try {
       await createJob({
         serviceType: selectedCategory,
         specialtiesRequired: [selectedCategory],
         inspectionFee: 200,
       });
-      toast.success(`تم طلب معاينة ${selectedCategory} بنجاح`, { id });
+      toast.success(`تم إرسال طلب ${selectedCategory} لخبراء نواكشوط المعتمدين`, { 
+        id,
+        description: "سيتم إخبارك فور قبول المهمة من أحد الفنيين"
+      });
       setSelectedCategory("");
     } catch (error: any) {
       toast.error(error.message || "فشل في طلب الخدمة", { id });

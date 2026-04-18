@@ -5,7 +5,7 @@ import { internal } from "./_generated/api";
 export const createJob = mutation({
   args: {
     serviceType: v.string(),
-    specialtiesRequired: v.array(v.string()),
+    specialtiesRequired: v.array(v.string()), 
     inspectionFee: v.number(),
   },
   handler: async (ctx, args) => {
@@ -51,6 +51,7 @@ export const acceptJob = mutation({
 export const listAvailableJobs = query({
   args: { providerSpecialties: v.optional(v.array(v.string())) },
   handler: async (ctx, args) => {
+    if (args.providerSpecialties === undefined) return [];
     const jobs = await ctx.db
       .query("jobs")
       .withIndex("by_status", (q) => q.eq("status", "pending_inspection"))
