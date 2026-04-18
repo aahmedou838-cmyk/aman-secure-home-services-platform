@@ -4,7 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, Briefcase, Wallet, TrendingUp, History, PieChart, ShieldCheck } from "lucide-react";
+import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, Briefcase, Wallet, TrendingUp, PieChart, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { JobHistory } from "@/components/JobHistory";
@@ -40,7 +40,7 @@ export default function WorkerDashboard() {
       }).catch(console.error);
     }, 10000);
     return () => clearInterval(interval);
-  }, [currentJob?._id, currentJob?.status, currentJob?.workerLocation, locationSharing, updateLocation]);
+  }, [currentJob, locationSharing, updateLocation]);
   const analytics = useMemo(() => {
     const totalEarned = historyJobs.reduce((acc, job) => acc + (job.quoteAmount ?? 0), 0);
     const totalCommission = transactions
@@ -93,6 +93,7 @@ export default function WorkerDashboard() {
     }
   };
   const handleSubmitQuote = async () => {
+    if (!currentJob) return;
     if (!quoteAmount || isNaN(Number(quoteAmount))) {
       toast.error("يرجى إدخال مبلغ صحيح");
       return;

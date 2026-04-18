@@ -10,9 +10,11 @@ interface GpsRadarProps {
 }
 export function GpsRadar({ status, isArrived, distance = 500, lat, lng }: GpsRadarProps) {
   // Logic to simulate positioning on the radar based on real coordinate drift
-  // Center is the client location
-  const offsetX = lng ? (lng - 46.6753) * 100000 : 0;
-  const offsetY = lat ? (lat - 24.7136) * 100000 : 0;
+  // Center is the client location in Nouakchott
+  const NOUAKCHOTT_LAT = 18.0735;
+  const NOUAKCHOTT_LNG = -15.9582;
+  const offsetX = lng ? (lng - NOUAKCHOTT_LNG) * 100000 : 0;
+  const offsetY = lat ? (lat - NOUAKCHOTT_LAT) * 100000 : 0;
   return (
     <div className="relative w-full aspect-square max-w-[300px] mx-auto overflow-hidden bg-aman-navy/5 rounded-full border-2 border-aman-navy/10 flex items-center justify-center">
       {/* Background Radar Rings */}
@@ -66,9 +68,9 @@ export function GpsRadar({ status, isArrived, distance = 500, lat, lng }: GpsRad
               <div className="w-4 h-4 bg-aman-teal rounded-full shadow-[0_0_15px_rgba(15,118,110,0.8)]" />
               <motion.div
                 className="absolute inset-0 bg-aman-teal rounded-full"
-                animate={{ 
-                  scale: distance < 100 ? [1, 4] : [1, 2.5], 
-                  opacity: distance < 100 ? [0.8, 0] : [0.5, 0] 
+                animate={{
+                  scale: distance < 100 ? [1, 4] : [1, 2.5],
+                  opacity: distance < 100 ? [0.8, 0] : [0.5, 0]
                 }}
                 transition={{ duration: distance < 100 ? 0.8 : 1.5, repeat: Infinity }}
               />

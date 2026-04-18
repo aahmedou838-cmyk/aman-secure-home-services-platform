@@ -40,7 +40,8 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="space-y-6">
           <Card className="rounded-[2rem] border-none bg-aman-teal text-white shadow-xl overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -ms-16 -mt-16" />
+            {/* Using logical inset-inline-start-0 for RTL safety */}
+            <div className="absolute top-0 inset-inline-start-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -ms-16 -mt-16" />
             <CardContent className="pt-10 pb-10 flex flex-col items-center text-center space-y-4 relative z-10">
               <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center border-4 border-white/30">
                 <UserCheck className="w-12 h-12" />
