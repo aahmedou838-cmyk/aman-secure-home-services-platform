@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 export const getWallet = query({
   args: {},
+  returns: v.union(v.object({ _id: v.id("wallets"), userId: v.id("users"), balance: v.number(), currency: v.string() }), v.null()),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
@@ -15,6 +16,7 @@ export const getWallet = query({
 });
 export const ensureWallet = mutation({
   args: {},
+  returns: v.id("wallets"),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
@@ -32,6 +34,15 @@ export const ensureWallet = mutation({
 });
 export const getTransactions = query({
   args: {},
+  returns: v.array(v.object({
+    _id: v.id("wallet_transactions"),
+    walletId: v.id("wallets"),
+    userId: v.id("users"),
+    type: v.union(v.literal("deposit"), v.literal("payment"), v.literal("payout"), v.literal("penalty"), v.literal("commission")),
+    amount: v.number(),
+    description: v.string(),
+    timestamp: v.number()
+  })),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
@@ -44,6 +55,7 @@ export const getTransactions = query({
 });
 export const topUp = mutation({
   args: { amount: v.number() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
@@ -82,6 +94,7 @@ export const creditFunds = internalMutation({
     description: v.string(),
     type: v.union(v.literal("deposit"), v.literal("payout"))
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     let wallet = await ctx.db
       .query("wallets")
@@ -118,6 +131,7 @@ export const deductFunds = internalMutation({
     description: v.string(),
     type: v.union(v.literal("payment"), v.literal("penalty"), v.literal("commission"))
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const wallet = await ctx.db
       .query("wallets")
@@ -145,6 +159,7 @@ export const processPayout = internalMutation({
     workerId: v.id("users"),
     amount: v.number()
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const COMMISSION_RATE = 0.15;
     const INSURANCE_RATE = 0.02;

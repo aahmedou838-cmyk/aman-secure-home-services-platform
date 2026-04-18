@@ -13,15 +13,16 @@ export default function ClientDashboard() {
   const activeJobs = useQuery(api.jobs.listActiveJobs) ?? [];
   const historyJobs = useQuery(api.jobs.listHistoryJobs, { role: "client" }) ?? [];
   const wallet = useQuery(api.wallets.getWallet);
+  const user = useQuery(api.auth.loggedInUser);
   const createJob = useMutation(api.jobs.createJob);
   const approveQuote = useMutation(api.jobs.approveQuote);
   const ensureWallet = useMutation(api.wallets.ensureWallet);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    if (wallet === null) {
+    if (user && wallet === null) {
       ensureWallet();
     }
-  }, [wallet, ensureWallet]);
+  }, [user, wallet, ensureWallet]);
   const handleRequestService = async () => {
     if (!wallet || wallet.balance < 50) {
       toast.error("رصيدك لا يكفي لرسوم المعاينة (50 ر.س)");
