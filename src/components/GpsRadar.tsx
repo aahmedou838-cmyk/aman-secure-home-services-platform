@@ -1,11 +1,12 @@
 import React from "react";
-import { motion } from "framer-motion";
-import { Navigation } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Navigation, CheckCircle2 } from "lucide-react";
 interface GpsRadarProps {
   status: string;
   isArrived: boolean;
+  distance?: number; // Simulated distance in meters
 }
-export function GpsRadar({ status, isArrived }: GpsRadarProps) {
+export function GpsRadar({ status, isArrived, distance = 500 }: GpsRadarProps) {
   return (
     <div className="relative w-full aspect-square max-w-[300px] mx-auto overflow-hidden bg-aman-navy/5 rounded-full border-2 border-aman-navy/10 flex items-center justify-center">
       {/* Background Radar Rings */}
@@ -31,26 +32,51 @@ export function GpsRadar({ status, isArrived }: GpsRadarProps) {
         animate={{ rotate: 360 }}
         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
       />
-      {/* Worker Dot */}
-      <motion.div
-        className="relative z-10 w-12 h-12 flex items-center justify-center"
-        animate={isArrived ? { x: 0, y: 0 } : { x: [20, -10, 5], y: [-30, 10, -5] }}
-        transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-      >
-        <div className="relative">
-          <div className="w-4 h-4 bg-aman-teal rounded-full shadow-[0_0_15px_rgba(15,118,110,0.8)]" />
+      <AnimatePresence mode="wait">
+        {isArrived ? (
           <motion.div
-            className="absolute inset-0 bg-aman-teal rounded-full"
-            animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          />
-        </div>
-      </motion.div>
+            key="arrived"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="relative z-10 flex flex-col items-center gap-2"
+          >
+            <div className="w-16 h-16 bg-aman-teal rounded-full flex items-center justify-center text-white shadow-xl shadow-aman-teal/40">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <span className="text-sm font-bold text-aman-teal">وصل الفني</span>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="moving"
+            className="relative z-10 w-12 h-12 flex items-center justify-center"
+            animate={{ 
+              x: [20, -10, 5], 
+              y: [-30, 10, -5],
+              scale: distance < 100 ? 1.5 : 1
+            }}
+            transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+          >
+            <div className="relative">
+              <div className="w-4 h-4 bg-aman-teal rounded-full shadow-[0_0_15px_rgba(15,118,110,0.8)]" />
+              <motion.div
+                className="absolute inset-0 bg-aman-teal rounded-full"
+                animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Status Label Overlay */}
       <div className="absolute bottom-6 left-0 right-0 text-center">
-        <span className="bg-aman-navy text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest animate-pulse">
-          {status}
-        </span>
+        {!isArrived && (
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-[10px] text-muted-foreground font-bold">المسافة: {distance} متر</span>
+            <span className="bg-aman-navy text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest animate-pulse">
+              {status}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

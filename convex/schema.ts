@@ -7,6 +7,17 @@ const applicationTables = {
     balance: v.number(),
     currency: v.string(), // e.g. "SAR"
   }).index("by_userId", ["userId"]),
+  files: defineTable({
+    userId: v.id("users"),
+    storageId: v.id("_storage"),
+    filename: v.string(),
+    mimeType: v.string(),
+    size: v.number(),
+    description: v.optional(v.string()),
+    uploadedAt: v.number(),
+  })
+    .index("by_userId_uploadedAt", ["userId", "uploadedAt"])
+    .index("by_userId_storageId", ["userId", "storageId"]),
   jobs: defineTable({
     clientId: v.id("users"),
     workerId: v.optional(v.id("users")),
@@ -31,8 +42,10 @@ const applicationTables = {
         lastUpdated: v.number(),
       })
     ),
+    penaltyTier: v.optional(v.number()), // 1-5 level penalty system
     createdAt: v.number(),
-  }).index("by_client", ["clientId"])
+  })
+    .index("by_client", ["clientId"])
     .index("by_worker", ["workerId"])
     .index("by_status", ["status"]),
   sos_alerts: defineTable({
@@ -44,7 +57,8 @@ const applicationTables = {
     }),
     timestamp: v.number(),
     resolved: v.boolean(),
-  }).index("by_worker", ["workerId"])
+  })
+    .index("by_worker", ["workerId"])
     .index("by_resolved", ["resolved"]),
 };
 export default defineSchema({
