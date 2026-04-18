@@ -4,13 +4,14 @@ import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, CheckCircle, Briefcase } from "lucide-react";
+import { AlertCircle, MapPin, Send, ShieldAlert, ToggleRight, CheckCircle, Briefcase, Wallet, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 export default function WorkerDashboard() {
   const triggerSOS = useMutation(api.sos.triggerSOS);
   const availableJobs = useQuery(api.jobs.listAvailableJobs) ?? [];
   const myJobs = useQuery(api.jobs.listWorkerJobs) ?? [];
+  const wallet = useQuery(api.wallets.getWallet);
   const acceptJob = useMutation(api.jobs.acceptJob);
   const updateStatus = useMutation(api.jobs.updateJobStatus);
   const submitQuote = useMutation(api.jobs.submitQuote);
@@ -18,15 +19,15 @@ export default function WorkerDashboard() {
   const [locationSharing, setLocationSharing] = useState(true);
   const [quoteAmount, setQuoteAmount] = useState("");
   const [activeTab, setActiveTab] = useState("available");
-  const currentJob = myJobs[0]; // Logic assumes one active job at a time for MVP
+  const currentJob = myJobs[0];
   const handleSOS = async () => {
     if (confirm("هل أنت متأكد من تفعيل نداء الاستغاثة؟ سيتم إخطار مركز العمليات فوراً.")) {
       setSosTriggered(true);
       try {
-        await triggerSOS({ 
+        await triggerSOS({
           jobId: currentJob?._id,
-          lat: 24.7136, 
-          lng: 46.6753 
+          lat: 24.7136,
+          lng: 46.6753
         });
         toast.error("تم إرسال نداء الاستغاثة بنجاح. ابق في مكان آمن.");
       } catch (e) {
@@ -65,14 +66,14 @@ export default function WorkerDashboard() {
     }
   };
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${sosTriggered ? 'pointer-events-none overflow-hidden' : ''}`}>
       <div className="py-8 md:py-12 space-y-8 relative">
         <AnimatePresence>
           {sosTriggered && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="fixed inset-0 z-[100] bg-red-600/90 backdrop-blur-xl flex flex-col items-center justify-center text-white p-6 text-center"
+              className="fixed inset-0 z-[100] bg-red-600/90 backdrop-blur-xl flex flex-col items-center justify-center text-white p-6 text-center pointer-events-auto"
             >
               <ShieldAlert className="w-32 h-32 mb-8 animate-sos-pulse" />
               <h1 className="text-5xl font-bold mb-4">تم تفعيل SOS</h1>
@@ -92,22 +93,32 @@ export default function WorkerDashboard() {
             <h1 className="text-3xl font-bold">لوحة تحكم الفني</h1>
             <p className="text-muted-foreground">أهلاً بك يا أحمد. حافظ على سلامتك دائماً.</p>
           </div>
-          <div className="flex items-center gap-4 bg-card p-3 rounded-2xl border shadow-sm w-full md:w-auto">
-            <div className="flex-1 md:flex-initial px-2">
-               <p className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-tighter">مشاركة الموقع (GPS)</p>
-               <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${locationSharing ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                  <span className="text-sm font-bold">{locationSharing ? 'نشط (10s)' : 'متوقف'}</span>
-               </div>
+          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+             {/* Earnings Card */}
+            <div className="flex items-center gap-4 bg-aman-navy text-white p-3 px-6 rounded-2xl shadow-lg">
+              <Wallet className="w-5 h-5 text-aman-teal" />
+              <div>
+                <p className="text-[10px] opacity-70 uppercase font-bold">رصيد الأرباح</p>
+                <p className="text-lg font-bold">{wallet?.balance?.toFixed(2) ?? "0.00"} ر.س</p>
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLocationSharing(!locationSharing)}
-              className={locationSharing ? 'text-aman-teal' : 'text-muted-foreground'}
-            >
-              <ToggleRight className={`w-8 h-8 transition-transform duration-300 ${!locationSharing ? 'rotate-180 opacity-50' : ''}`} />
-            </Button>
+            <div className="flex items-center gap-4 bg-card p-3 rounded-2xl border shadow-sm flex-1 md:flex-initial">
+              <div className="px-2">
+                 <p className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-tighter">مشاركة الموقع (GPS)</p>
+                 <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${locationSharing ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                    <span className="text-sm font-bold">{locationSharing ? 'نشط (10s)' : 'متوقف'}</span>
+                 </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocationSharing(!locationSharing)}
+                className={locationSharing ? 'text-aman-teal' : 'text-muted-foreground'}
+              >
+                <ToggleRight className={`w-8 h-8 transition-transform duration-300 ${!locationSharing ? 'rotate-180 opacity-50' : ''}`} />
+              </Button>
+            </div>
           </div>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -140,8 +151,11 @@ export default function WorkerDashboard() {
                         <span>حي النخيل (على بعد 2.4 كم)</span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-muted rounded-xl">
-                        <span className="text-xs">رسوم المعاينة:</span>
-                        <span className="font-bold text-aman-teal">{job.inspectionFee} ر.س</span>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] opacity-60">أرباح المعاينة:</span>
+                          <span className="font-bold text-aman-teal">{job.inspectionFee} ر.س</span>
+                        </div>
+                        <TrendingUp className="w-5 h-5 text-aman-teal/30" />
                       </div>
                       <Button onClick={() => handleAccept(job._id)} className="w-full rounded-xl bg-aman-teal h-11 font-bold">قبول المهمة</Button>
                     </CardContent>
@@ -153,7 +167,6 @@ export default function WorkerDashboard() {
           <TabsContent value="active">
             {currentJob ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Active Job Controls */}
                 <Card className="rounded-[2.5rem] border-aman-teal/20 shadow-lg">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
@@ -178,7 +191,7 @@ export default function WorkerDashboard() {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <Button 
+                      <Button
                         disabled={currentJob.status !== "en_route"}
                         onClick={() => handleStatusUpdate(currentJob._id, "arrived")}
                         variant={currentJob.status === "en_route" ? "default" : "outline"}
@@ -186,7 +199,7 @@ export default function WorkerDashboard() {
                       >
                         تأكيد الوصول
                       </Button>
-                      <Button 
+                      <Button
                         disabled={currentJob.status !== "arrived"}
                         onClick={() => handleStatusUpdate(currentJob._id, "inspection_complete")}
                         variant={currentJob.status === "arrived" ? "default" : "outline"}
@@ -223,7 +236,6 @@ export default function WorkerDashboard() {
                     )}
                   </CardContent>
                 </Card>
-                {/* SOS Safety Card */}
                 <Card className="border-4 border-aman-red/20 bg-aman-red/5 rounded-[2.5rem] overflow-hidden shadow-lg">
                   <CardContent className="p-10 flex flex-col items-center text-center space-y-6">
                     <div className="w-24 h-24 bg-aman-red rounded-full flex items-center justify-center text-white shadow-2xl shadow-aman-red/40 animate-sos-pulse">
@@ -236,7 +248,7 @@ export default function WorkerDashboard() {
                     <Button
                       variant="destructive"
                       size="lg"
-                      className="w-full h-16 text-xl font-bold rounded-2xl shadow-lg hover:bg-aman-red/90"
+                      className="w-full h-16 text-xl font-bold rounded-2xl shadow-lg hover:bg-aman-red/90 pointer-events-auto"
                       onClick={handleSOS}
                     >
                       تفعيل الاستغاثة الآن

@@ -1,18 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { GpsRadar } from "@/components/GpsRadar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Clock, CheckCircle2, Wallet, Shield, AlertCircle } from "lucide-react";
+import { Plus, Clock, CheckCircle2, Wallet, Shield, AlertCircle, ReceiptText } from "lucide-react";
 import { toast } from "sonner";
+import { WalletTopUp } from "@/components/WalletTopUp";
 export default function ClientDashboard() {
   const activeJobs = useQuery(api.jobs.listActiveJobs) ?? [];
   const wallet = useQuery(api.wallets.getWallet);
+  const transactions = useQuery(api.wallets.getTransactions) ?? [];
   const createJob = useMutation(api.jobs.createJob);
   const approveQuote = useMutation(api.jobs.approveQuote);
+  const ensureWallet = useMutation(api.wallets.ensureWallet);
   const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (wallet === null) {
+      ensureWallet();
+    }
+  }, [wallet, ensureWallet]);
   const handleRequestService = async () => {
+    if (!wallet || wallet.balance < 50) {
+      toast.error("رصيدك لا يكفي لرسوم المعاينة (50 ر.س)");
+      return;
+    }
     setLoading(true);
     try {
       await createJob({
@@ -20,18 +32,22 @@ export default function ClientDashboard() {
         inspectionFee: 50,
       });
       toast.success("تم طلب المعاينة بنجاح");
-    } catch (error) {
-      toast.error("فشل في طلب الخدمة");
+    } catch (error: any) {
+      toast.error(error.message || "فشل في طلب الخدمة");
     } finally {
       setLoading(false);
     }
   };
-  const handleApproveQuote = async (jobId: any) => {
+  const handleApproveQuote = async (jobId: any, amount: number) => {
+    if (!wallet || wallet.balance < amount) {
+      toast.error("رصيدك لا يكفي للموافقة على عرض السعر");
+      return;
+    }
     try {
       await approveQuote({ jobId });
-      toast.success("تمت الموافقة على عرض السعر");
-    } catch (error) {
-      toast.error("حدث خطأ أثناء الموافقة");
+      toast.success("تمت الموافقة على عرض السعر وبدأ العمل");
+    } catch (error: any) {
+      toast.error(error.message || "حدث خطأ أثناء الموافقة");
     }
   };
   return (
@@ -48,7 +64,6 @@ export default function ClientDashboard() {
           </Button>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Jobs List */}
           <div className="lg:col-span-2 space-y-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Clock className="w-5 h-5 text-aman-teal" />
@@ -91,8 +106,8 @@ export default function ClientDashboard() {
                               <p className="text-xs text-muted-foreground mb-1">عرض السعر النهائي المقترح:</p>
                               <p className="text-3xl font-bold text-aman-navy">{job.quoteAmount} <span className="text-sm font-normal">ر.س</span></p>
                             </div>
-                            <Button 
-                              onClick={() => handleApproveQuote(job._id)} 
+                            <Button
+                              onClick={() => handleApproveQuote(job._id, job.quoteAmount!)}
                               className="w-full rounded-xl bg-aman-teal hover:bg-aman-teal/90"
                             >
                               الموافقة وبدء العمل
@@ -116,7 +131,6 @@ export default function ClientDashboard() {
               ))
             )}
           </div>
-          {/* Sidebar */}
           <div className="space-y-6">
             <Card className="bg-aman-navy text-white rounded-[2rem] overflow-hidden border-none shadow-xl">
               <CardHeader>
@@ -126,8 +140,35 @@ export default function ClientDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-4xl font-bold">{wallet?.balance.toFixed(2) ?? "0.00"} <span className="text-lg font-normal opacity-70">ر.س</span></div>
-                <Button className="w-full bg-white text-aman-navy hover:bg-white/90 rounded-xl font-bold">شحن الرصيد</Button>
+                <div className="text-4xl font-bold">
+                  {wallet?.balance?.toFixed(2) ?? "0.00"} <span className="text-lg font-normal opacity-70">ر.س</span>
+                </div>
+                <WalletTopUp />
+              </CardContent>
+            </Card>
+            <Card className="rounded-[2rem] border-none shadow-sm bg-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <ReceiptText className="w-5 h-5 text-aman-teal" />
+                  آخر العمليات
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 max-h-[300px] overflow-y-auto">
+                {transactions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">لا توجد عمليات سابقة</p>
+                ) : (
+                  transactions.map((t) => (
+                    <div key={t._id} className="flex justify-between items-center border-b pb-2 last:border-0">
+                      <div>
+                        <p className="text-sm font-bold">{t.description}</p>
+                        <p className="text-[10px] text-muted-foreground">{new Date(t.timestamp).toLocaleDateString("ar-SA")}</p>
+                      </div>
+                      <span className={`text-sm font-bold ${t.type === 'deposit' ? 'text-green-500' : 'text-aman-red'}`}>
+                        {t.type === 'deposit' ? '+' : '-'}{t.amount}
+                      </span>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
             <Card className="rounded-[2rem] border-none shadow-sm bg-muted/30">

@@ -7,6 +7,21 @@ const applicationTables = {
     balance: v.number(),
     currency: v.string(), // e.g. "SAR"
   }).index("by_userId", ["userId"]),
+  wallet_transactions: defineTable({
+    walletId: v.id("wallets"),
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("deposit"),
+      v.literal("payment"),
+      v.literal("payout"),
+      v.literal("penalty"),
+      v.literal("commission")
+    ),
+    amount: v.number(),
+    description: v.string(),
+    timestamp: v.number(),
+  }).index("by_walletId", ["walletId"])
+    .index("by_userId", ["userId"]),
   files: defineTable({
     userId: v.id("users"),
     storageId: v.id("_storage"),
@@ -43,6 +58,7 @@ const applicationTables = {
       })
     ),
     penaltyTier: v.optional(v.number()), // 1-5 level penalty system
+    isPaid: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index("by_client", ["clientId"])

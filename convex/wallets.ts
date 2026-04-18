@@ -6,19 +6,39 @@ export const getWallet = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    const wallet = await ctx.db
+    return await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
-    if (!wallet) {
-      const walletId = await ctx.db.insert("wallets", {
-        userId,
-        balance: 0,
-        currency: "SAR",
-      });
-      return await ctx.db.get(walletId);
-    }
-    return wallet;
+  },
+});
+export const ensureWallet = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    const existing = await ctx.db
+      .query("wallets")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (existing) return existing._id;
+    return await ctx.db.insert("wallets", {
+      userId,
+      balance: 0,
+      currency: "SAR",
+    });
+  },
+});
+export const getTransactions = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    return await ctx.db
+      .query("wallet_transactions")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(10);
   },
 });
 export const topUp = mutation({
@@ -26,25 +46,36 @@ export const topUp = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
-    const wallet = await ctx.db
+    let wallet = await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
     if (!wallet) {
-      await ctx.db.insert("wallets", {
+      const walletId = await ctx.db.insert("wallets", {
         userId,
         balance: args.amount,
         currency: "SAR",
       });
+      wallet = await ctx.db.get(walletId);
     } else {
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
       });
     }
+    if (wallet) {
+      await ctx.db.insert("wallet_transactions", {
+        walletId: wallet._id,
+        userId: userId,
+        type: "deposit",
+        amount: args.amount,
+        description: "شحن رصيد المحفظة",
+        timestamp: Date.now(),
+      });
+    }
   },
 });
 export const deductFunds = internalMutation({
-  args: { userId: v.id("users"), amount: v.number() },
+  args: { userId: v.id("users"), amount: v.number(), description: v.string(), type: v.union(v.literal("payment"), v.literal("penalty"), v.literal("commission")) },
   handler: async (ctx, args) => {
     const wallet = await ctx.db
       .query("wallets")
@@ -55,6 +86,14 @@ export const deductFunds = internalMutation({
     }
     await ctx.db.patch(wallet._id, {
       balance: wallet.balance - args.amount,
+    });
+    await ctx.db.insert("wallet_transactions", {
+      walletId: wallet._id,
+      userId: args.userId,
+      type: args.type,
+      amount: args.amount,
+      description: args.description,
+      timestamp: Date.now(),
     });
   },
 });

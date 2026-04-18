@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 export const createJob = mutation({
   args: {
     serviceType: v.string(),
@@ -9,6 +10,13 @@ export const createJob = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
+    // Enforce upfront payment for inspection
+    await ctx.runMutation(internal.wallets.deductFunds, {
+      userId,
+      amount: args.inspectionFee,
+      type: "payment",
+      description: `رسوم معاينة لخدمة: ${args.serviceType}`,
+    });
     const jobId = await ctx.db.insert("jobs", {
       clientId: userId,
       status: "pending_inspection",
@@ -35,14 +43,14 @@ export const acceptJob = mutation({
   },
 });
 export const updateJobStatus = mutation({
-  args: { 
-    jobId: v.id("jobs"), 
+  args: {
+    jobId: v.id("jobs"),
     status: v.union(
-      v.literal("arrived"), 
-      v.literal("inspection_complete"), 
-      v.literal("in_progress"), 
+      v.literal("arrived"),
+      v.literal("inspection_complete"),
+      v.literal("in_progress"),
       v.literal("completed")
-    ) 
+    )
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -54,38 +62,6 @@ export const updateJobStatus = mutation({
     await ctx.db.patch(args.jobId, { status: args.status });
   },
 });
-export const updateLocation = mutation({
-  args: {
-    jobId: v.id("jobs"),
-    lat: v.number(),
-    lng: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-    await ctx.db.patch(args.jobId, {
-      workerLocation: {
-        lat: args.lat,
-        lng: args.lng,
-        lastUpdated: Date.now(),
-      },
-    });
-  },
-});
-export const submitQuote = mutation({
-  args: {
-    jobId: v.id("jobs"),
-    amount: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-    await ctx.db.patch(args.jobId, {
-      quoteAmount: args.amount,
-      status: "quote_pending",
-    });
-  },
-});
 export const approveQuote = mutation({
   args: {
     jobId: v.id("jobs"),
@@ -93,9 +69,43 @@ export const approveQuote = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
+    const job = await ctx.db.get(args.jobId);
+    if (!job || job.clientId !== userId || !job.quoteAmount) {
+      throw new Error("Invalid job or missing quote");
+    }
+    // Deduct final quote amount
+    await ctx.runMutation(internal.wallets.deductFunds, {
+      userId,
+      amount: job.quoteAmount,
+      type: "payment",
+      description: `دفع قيمة العمل لخدمة: ${job.serviceType}`,
+    });
     await ctx.db.patch(args.jobId, {
       status: "approved",
+      isPaid: true,
     });
+  },
+});
+export const cancelJob = mutation({
+  args: { jobId: v.id("jobs") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    const job = await ctx.db.get(args.jobId);
+    if (!job) throw new Error("Job not found");
+    const isWorker = job.workerId === userId;
+    const update: any = { status: "cancelled" };
+    if (isWorker && job.status !== "pending_inspection") {
+      update.penaltyTier = (job.penaltyTier ?? 0) + 1;
+      // Deduct penalty from worker
+      await ctx.runMutation(internal.wallets.deductFunds, {
+        userId,
+        amount: 25, // Fixed penalty amount for cancellation
+        type: "penalty",
+        description: "غرامة إلغاء مهمة بعد القبول",
+      });
+    }
+    await ctx.db.patch(args.jobId, update);
   },
 });
 export const listActiveJobs = query({
@@ -132,5 +142,16 @@ export const listWorkerJobs = query({
       .filter((q) => q.neq(q.field("status"), "completed"))
       .order("desc")
       .collect();
+  },
+});
+export const submitQuote = mutation({
+  args: { jobId: v.id("jobs"), amount: v.number() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    await ctx.db.patch(args.jobId, {
+      quoteAmount: args.amount,
+      status: "quote_pending",
+    });
   },
 });
