@@ -1,23 +1,22 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Joystick } from "./Joystick";
 import { HUD } from "./HUD";
+import { WORLD_DATA, NPC } from "@/lib/gameConstants";
+import { InteractionUI } from "./InteractionUI";
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const player = useQuery(api.players.getMe);
-  const others = useQuery(api.players.getActivePlayers, { zoneId: "starter_zone" }) ?? [];
+  const rawOthers = useQuery(api.players.getActivePlayers, { zoneId: "starter_zone" });
+  const others = useMemo(() => rawOthers ?? [], [rawOthers]);
   const updatePos = useMutation(api.players.updatePosition);
   const [pos, setPos] = useState({ x: 500, y: 500 });
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
-  const lastUpdateRef = useRef(0);
-  // Initialize local pos when player data arrives
+  const [nearestNPC, setNearestNPC] = useState<NPC | null>(null);
   useEffect(() => {
-    if (player) {
-      setPos(player.position);
-    }
+    if (player) setPos(player.position);
   }, [player]);
-  // Movement loop
   useEffect(() => {
     let frameId: number;
     const move = () => {
@@ -30,7 +29,6 @@ export function GameCanvas() {
     frameId = requestAnimationFrame(move);
     return () => cancelAnimationFrame(frameId);
   }, [velocity]);
-  // Sync to server every 100ms
   useEffect(() => {
     const timer = setInterval(() => {
       if (Math.abs(velocity.x) > 0 || Math.abs(velocity.y) > 0) {
@@ -39,7 +37,20 @@ export function GameCanvas() {
     }, 100);
     return () => clearInterval(timer);
   }, [pos, velocity, updatePos]);
-  // Render loop
+  // Interaction detection
+  useEffect(() => {
+    const npcs = WORLD_DATA.starter_zone.npcs;
+    let closest: NPC | null = null;
+    let minDist = 80;
+    npcs.forEach(npc => {
+      const dist = Math.sqrt(Math.pow(npc.position.x - pos.x, 2) + Math.pow(npc.position.y - pos.y, 2));
+      if (dist < minDist) {
+        minDist = dist;
+        closest = npc;
+      }
+    });
+    setNearestNPC(closest);
+  }, [pos]);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -49,13 +60,11 @@ export function GameCanvas() {
     const draw = () => {
       const width = canvas.width = window.innerWidth;
       const height = canvas.height = window.innerHeight - 80;
-      // Clear
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(0, 0, width, height);
-      // Camera offset
       const camX = width / 2 - pos.x;
       const camY = height / 2 - pos.y;
-      // Draw Grid
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, width, height);
+      // Grid
       ctx.strokeStyle = "#1e293b";
       ctx.lineWidth = 1;
       const gridSize = 50;
@@ -65,7 +74,18 @@ export function GameCanvas() {
       for (let y = camY % gridSize; y < height; y += gridSize) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
       }
-      // Draw Others
+      // Draw NPCs
+      WORLD_DATA.starter_zone.npcs.forEach(npc => {
+        ctx.fillStyle = npc.color;
+        ctx.beginPath();
+        ctx.arc(npc.position.x + camX, npc.position.y + camY, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 12px Cairo";
+        ctx.textAlign = "center";
+        ctx.fillText(npc.name, npc.position.x + camX, npc.position.y + camY - 30);
+      });
+      // Others
       others.forEach(other => {
         if (other.userId === player?.userId) return;
         ctx.fillStyle = "#64748b";
@@ -77,7 +97,7 @@ export function GameCanvas() {
         ctx.textAlign = "center";
         ctx.fillText(other.nickname, other.position.x + camX, other.position.y + camY - 20);
       });
-      // Draw Local Player
+      // Local Player
       ctx.fillStyle = "#0f766e";
       ctx.beginPath();
       ctx.arc(width / 2, height / 2, 20, 0, Math.PI * 2);
@@ -95,6 +115,7 @@ export function GameCanvas() {
       <canvas ref={canvasRef} className="block w-full h-full" />
       <HUD />
       <Joystick onMove={(v) => setVelocity(v)} />
+      {nearestNPC && <InteractionUI npc={nearestNPC} />}
     </div>
   );
 }

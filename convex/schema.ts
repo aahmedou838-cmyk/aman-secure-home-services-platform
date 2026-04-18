@@ -30,6 +30,14 @@ const applicationTables = {
   })
   .index("by_userId", ["userId"])
   .index("by_zone_active", ["zoneId", "lastActive"]),
+  game_quests: defineTable({
+    questId: v.string(),
+    title: v.string(),
+    description: v.string(),
+    rewardXp: v.number(),
+    type: v.union(v.literal("fetch"), v.literal("puzzle"), v.literal("dialogue")),
+    prerequisiteQuestId: v.optional(v.string()),
+  }).index("by_questId", ["questId"]),
   player_quests: defineTable({
     playerId: v.id("players"),
     questId: v.string(),
