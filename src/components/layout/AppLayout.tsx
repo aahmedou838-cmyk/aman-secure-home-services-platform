@@ -5,6 +5,7 @@ import { Authenticated, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
+import { NotificationCenter } from "@/components/NotificationCenter";
 function NavContent() {
   const { pathname } = useLocation();
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -36,6 +37,7 @@ function NavContent() {
                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             ) : isAuthenticated ? (
               <>
+                <NotificationCenter />
                 <div className="flex items-center gap-2 px-4 py-2 bg-aman-navy text-white rounded-2xl shadow-md border border-white/10">
                   <Wallet className="w-4 h-4 text-aman-teal" />
                   <span className="text-sm font-black whitespace-nowrap">
@@ -59,7 +61,6 @@ function NavContent() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                 {/* Empty or login prompt handled by Page content but layout stays consistent */}
               </div>
             )}
             <ThemeToggle className="static" />
@@ -71,7 +72,6 @@ function NavContent() {
           <Outlet />
         </div>
       </main>
-      {/* Responsive Bottom Nav for Mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-background/90 backdrop-blur-xl border-t px-6 py-4 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {

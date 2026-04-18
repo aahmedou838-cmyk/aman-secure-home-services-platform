@@ -3,13 +3,11 @@ import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 const applicationTables = {
   users: defineTable({
-    // Auth fields (required for @convex-dev/auth integration)
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),
     phoneVerificationTime: v.optional(v.number()),
     image: v.optional(v.string()),
-    // Custom Marketplace fields - made optional to prevent schema validation errors on auth-initiation
     role: v.optional(v.union(v.literal("client"), v.literal("provider"))),
     phone: v.optional(v.string()),
     specialties: v.optional(v.array(v.string())),
@@ -17,6 +15,35 @@ const applicationTables = {
   })
   .index("by_email", ["email"])
   .index("by_role", ["role"]),
+  providers_listings: defineTable({
+    providerId: v.id("users"),
+    category: v.union(v.literal("freelance"), v.literal("transport"), v.literal("marketplace")),
+    subcategory: v.string(),
+    title: v.string(),
+    description: v.string(),
+    price: v.number(),
+    location: v.object({
+      lat: v.number(),
+      lng: v.number(),
+    }),
+    images: v.optional(v.array(v.id("_storage"))),
+    active: v.boolean(),
+    createdAt: v.number(),
+  })
+  .index("by_providerId", ["providerId"])
+  .index("by_category_active", ["category", "active"])
+  .index("by_subcategory_active", ["subcategory", "active"]),
+  notifications: defineTable({
+    toUserId: v.id("users"),
+    fromJobId: v.optional(v.id("jobs")),
+    type: v.union(v.literal("new_request"), v.literal("accepted"), v.literal("quote_received"), v.literal("system")),
+    title: v.string(),
+    body: v.string(),
+    read: v.boolean(),
+    createdAt: v.number(),
+  })
+  .index("by_toUserId_read", ["toUserId", "read"])
+  .index("by_toUserId", ["toUserId"]),
   wallets: defineTable({
     userId: v.id("users"),
     balance: v.number(),
@@ -62,7 +89,9 @@ const applicationTables = {
       v.literal("completed"),
       v.literal("cancelled")
     ),
-    serviceType: v.string(),
+    serviceType: v.string(), // This maps to subcategory
+    category: v.optional(v.union(v.literal("freelance"), v.literal("transport"), v.literal("marketplace"))),
+    publicFeed: v.optional(v.boolean()),
     providerSpecialtiesRequired: v.array(v.string()),
     inspectionFee: v.number(),
     quoteAmount: v.optional(v.number()),
@@ -79,7 +108,8 @@ const applicationTables = {
   })
     .index("by_client", ["clientId"])
     .index("by_worker", ["workerId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_public_status", ["publicFeed", "status"]),
   sos_alerts: defineTable({
     workerId: v.id("users"),
     jobId: v.optional(v.id("jobs")),
