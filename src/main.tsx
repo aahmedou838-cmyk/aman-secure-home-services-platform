@@ -17,6 +17,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { HomePage } from '@/pages/HomePage'
 import ClientDashboard from '@/pages/ClientDashboard'
 import WorkerDashboard from '@/pages/WorkerDashboard'
+import ProfilePage from '@/pages/ProfilePage'
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: "/", element: <HomePage /> },
       { path: "/client-dashboard", element: <ClientDashboard /> },
       { path: "/worker-dashboard", element: <WorkerDashboard /> },
+      { path: "/profile", element: <ProfilePage /> },
     ],
   },
 ]);

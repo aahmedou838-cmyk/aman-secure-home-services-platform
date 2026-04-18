@@ -38,7 +38,7 @@ export const getTransactions = query({
       .query("wallet_transactions")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .order("desc")
-      .take(10);
+      .take(15);
   },
 });
 export const topUp = mutation({
@@ -74,15 +74,56 @@ export const topUp = mutation({
     }
   },
 });
+export const creditFunds = internalMutation({
+  args: { 
+    userId: v.id("users"), 
+    amount: v.number(), 
+    description: v.string(), 
+    type: v.union(v.literal("deposit"), v.literal("payout")) 
+  },
+  handler: async (ctx, args) => {
+    let wallet = await ctx.db
+      .query("wallets")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (!wallet) {
+      const walletId = await ctx.db.insert("wallets", {
+        userId: args.userId,
+        balance: args.amount,
+        currency: "SAR",
+      });
+      wallet = await ctx.db.get(walletId);
+    } else {
+      await ctx.db.patch(wallet._id, {
+        balance: wallet.balance + args.amount,
+      });
+    }
+    if (wallet) {
+      await ctx.db.insert("wallet_transactions", {
+        walletId: wallet._id,
+        userId: args.userId,
+        type: args.type,
+        amount: args.amount,
+        description: args.description,
+        timestamp: Date.now(),
+      });
+    }
+  },
+});
 export const deductFunds = internalMutation({
-  args: { userId: v.id("users"), amount: v.number(), description: v.string(), type: v.union(v.literal("payment"), v.literal("penalty"), v.literal("commission")) },
+  args: { 
+    userId: v.id("users"), 
+    amount: v.number(), 
+    description: v.string(), 
+    type: v.union(v.literal("payment"), v.literal("penalty"), v.literal("commission")) 
+  },
   handler: async (ctx, args) => {
     const wallet = await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
     if (!wallet || wallet.balance < args.amount) {
-      throw new Error("Insufficient funds");
+      throw new Error("رصيد غير كافٍ");
     }
     await ctx.db.patch(wallet._id, {
       balance: wallet.balance - args.amount,
@@ -95,5 +136,49 @@ export const deductFunds = internalMutation({
       description: args.description,
       timestamp: Date.now(),
     });
+  },
+});
+export const processPayout = internalMutation({
+  args: { 
+    jobId: v.id("jobs"), 
+    workerId: v.id("users"), 
+    amount: v.number() 
+  },
+  handler: async (ctx, args) => {
+    const COMMISSION_RATE = 0.15;
+    const INSURANCE_RATE = 0.02;
+    const commission = args.amount * COMMISSION_RATE;
+    const insurance = args.amount * INSURANCE_RATE;
+    const netPayout = args.amount - commission - insurance;
+    // Credit net amount to worker
+    await ctx.runMutation(internal.wallets.creditFunds, {
+      userId: args.workerId,
+      amount: netPayout,
+      type: "payout",
+      description: `دفعة مستحقة للمهمة رقم: ${args.jobId.slice(-6)}`,
+    });
+    // Record system deductions in transactions for audit (can be expanded to a central platform wallet)
+    const wallet = await ctx.db
+      .query("wallets")
+      .withIndex("by_userId", (q) => q.eq("userId", args.workerId))
+      .unique();
+    if (wallet) {
+      await ctx.db.insert("wallet_transactions", {
+        walletId: wallet._id,
+        userId: args.workerId,
+        type: "commission",
+        amount: commission,
+        description: "عمولة المنصة (15%)",
+        timestamp: Date.now(),
+      });
+      await ctx.db.insert("wallet_transactions", {
+        walletId: wallet._id,
+        userId: args.workerId,
+        type: "commission", // Using commission type for simplicity or could add 'insurance_fee'
+        amount: insurance,
+        description: "صندوق تأمين الفنيين (2%)",
+        timestamp: Date.now(),
+      });
+    }
   },
 });

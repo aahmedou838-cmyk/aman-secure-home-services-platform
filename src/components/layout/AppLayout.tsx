@@ -1,15 +1,18 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Home, User, Briefcase, Wallet, Shield } from "lucide-react";
-import { Authenticated, Unauthenticated } from "convex/react";
+import { Home, User, Briefcase, Wallet, Shield, Loader2 } from "lucide-react";
+import { Authenticated, useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
 export function AppLayout() {
   const { pathname } = useLocation();
+  const wallet = useQuery(api.wallets.getWallet);
   const navItems = [
     { label: "الرئيسية", path: "/", icon: Home },
     { label: "داشبورد العميل", path: "/client-dashboard", icon: User },
     { label: "داشبورد العامل", path: "/worker-dashboard", icon: Briefcase },
+    { label: "الملف الشخصي", path: "/profile", icon: Shield },
   ];
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans" dir="rtl">
@@ -28,8 +31,17 @@ export function AppLayout() {
             <Authenticated>
               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-aman-teal/10 rounded-full border border-aman-teal/20">
                 <Wallet className="w-4 h-4 text-aman-teal" />
-                <span className="text-sm font-semibold text-aman-teal">0.00 ر.س</span>
+                <span className="text-sm font-semibold text-aman-teal">
+                  {wallet === undefined ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    `${wallet?.balance?.toFixed(2) ?? "0.00"} ر.س`
+                  )}
+                </span>
               </div>
+              <Link to="/profile" className="hidden md:flex p-2 hover:bg-muted rounded-full transition-colors">
+                <User className="w-5 h-5" />
+              </Link>
               <SignOutButton />
             </Authenticated>
             <ThemeToggle className="static" />

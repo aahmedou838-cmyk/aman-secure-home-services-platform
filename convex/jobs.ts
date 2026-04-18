@@ -10,7 +10,6 @@ export const createJob = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
-    // Enforce upfront payment for inspection
     await ctx.runMutation(internal.wallets.deductFunds, {
       userId,
       amount: args.inspectionFee,
@@ -62,6 +61,24 @@ export const updateJobStatus = mutation({
     await ctx.db.patch(args.jobId, { status: args.status });
   },
 });
+export const completeJob = mutation({
+  args: { jobId: v.id("jobs") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    const job = await ctx.db.get(args.jobId);
+    if (!job || job.workerId !== userId) throw new Error("Unauthorized");
+    if (job.status !== "in_progress") throw new Error("Job must be in progress to complete");
+    if (!job.quoteAmount) throw new Error("Quote must be approved first");
+    await ctx.db.patch(args.jobId, { status: "completed" });
+    // Process payout split
+    await ctx.runMutation(internal.wallets.processPayout, {
+      jobId: args.jobId,
+      workerId: userId,
+      amount: job.quoteAmount,
+    });
+  },
+});
 export const approveQuote = mutation({
   args: {
     jobId: v.id("jobs"),
@@ -73,7 +90,6 @@ export const approveQuote = mutation({
     if (!job || job.clientId !== userId || !job.quoteAmount) {
       throw new Error("Invalid job or missing quote");
     }
-    // Deduct final quote amount
     await ctx.runMutation(internal.wallets.deductFunds, {
       userId,
       amount: job.quoteAmount,
@@ -86,28 +102,6 @@ export const approveQuote = mutation({
     });
   },
 });
-export const cancelJob = mutation({
-  args: { jobId: v.id("jobs") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-    const job = await ctx.db.get(args.jobId);
-    if (!job) throw new Error("Job not found");
-    const isWorker = job.workerId === userId;
-    const update: any = { status: "cancelled" };
-    if (isWorker && job.status !== "pending_inspection") {
-      update.penaltyTier = (job.penaltyTier ?? 0) + 1;
-      // Deduct penalty from worker
-      await ctx.runMutation(internal.wallets.deductFunds, {
-        userId,
-        amount: 25, // Fixed penalty amount for cancellation
-        type: "penalty",
-        description: "غرامة إلغاء مهمة بعد القبول",
-      });
-    }
-    await ctx.db.patch(args.jobId, update);
-  },
-});
 export const listActiveJobs = query({
   args: {},
   handler: async (ctx) => {
@@ -117,6 +111,21 @@ export const listActiveJobs = query({
       .query("jobs")
       .withIndex("by_client", (q) => q.eq("clientId", userId))
       .filter((q) => q.neq(q.field("status"), "completed"))
+      .order("desc")
+      .collect();
+  },
+});
+export const listHistoryJobs = query({
+  args: { role: v.union(v.literal("client"), v.literal("worker")) },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const index = args.role === "client" ? "by_client" : "by_worker";
+    const field = args.role === "client" ? "clientId" : "workerId";
+    return await ctx.db
+      .query("jobs")
+      .withIndex(index, (q) => q.eq(field as any, userId))
+      .filter((q) => q.eq(q.field("status"), "completed"))
       .order("desc")
       .collect();
   },
