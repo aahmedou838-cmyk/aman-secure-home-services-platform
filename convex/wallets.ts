@@ -28,7 +28,7 @@ export const ensureWallet = mutation({
     return await ctx.db.insert("wallets", {
       userId,
       balance: 0,
-      currency: "SAR",
+      currency: "MRU",
     });
   },
 });
@@ -67,7 +67,7 @@ export const topUp = mutation({
       const walletId = await ctx.db.insert("wallets", {
         userId,
         balance: args.amount,
-        currency: "SAR",
+        currency: "MRU",
       });
       wallet = await ctx.db.get(walletId);
     } else {
@@ -81,7 +81,7 @@ export const topUp = mutation({
         userId: userId,
         type: "deposit",
         amount: args.amount,
-        description: "شحن رصيد المحفظة",
+        description: "شحن رصيد المحفظة (أوقية)",
         timestamp: Date.now(),
       });
     }
@@ -104,7 +104,7 @@ export const creditFunds = internalMutation({
       const walletId = await ctx.db.insert("wallets", {
         userId: args.userId,
         balance: args.amount,
-        currency: "SAR",
+        currency: "MRU",
       });
       wallet = await ctx.db.get(walletId);
     } else {
@@ -138,7 +138,7 @@ export const deductFunds = internalMutation({
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
     if (!wallet || wallet.balance < args.amount) {
-      throw new Error("رصيد غير كافٍ");
+      throw new Error("رصيد غير كافٍ بالأوقية");
     }
     await ctx.db.patch(wallet._id, {
       balance: wallet.balance - args.amount,
@@ -170,7 +170,7 @@ export const processPayout = internalMutation({
       userId: args.workerId,
       amount: netPayout,
       type: "payout",
-      description: `دفعة مستحقة للمهمة رقم: ${args.jobId.slice(-6)}`,
+      description: `دفعة مستحقة (أوقية) للمهمة رقم: ${args.jobId.slice(-6)}`,
     });
     const wallet = await ctx.db
       .query("wallets")
@@ -182,7 +182,7 @@ export const processPayout = internalMutation({
         userId: args.workerId,
         type: "commission",
         amount: commission,
-        description: "عمولة المنصة (15%)",
+        description: "عمولة المنصة 15% (أوقية)",
         timestamp: Date.now(),
       });
       await ctx.db.insert("wallet_transactions", {
@@ -190,7 +190,7 @@ export const processPayout = internalMutation({
         userId: args.workerId,
         type: "commission",
         amount: insurance,
-        description: "صندوق تأمين الفنيين (2%)",
+        description: "صندوق تأمين الفنيين 2% (أوقية)",
         timestamp: Date.now(),
       });
     }

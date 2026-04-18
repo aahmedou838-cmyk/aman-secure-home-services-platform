@@ -14,7 +14,7 @@ export const createJob = mutation({
       userId,
       amount: args.inspectionFee,
       type: "payment",
-      description: `رسوم معاينة لخدمة: ${args.serviceType}`,
+      description: `رسوم معاينة (أوقية) لخدمة: ${args.serviceType}`,
     });
     const jobId = await ctx.db.insert("jobs", {
       clientId: userId,
@@ -39,8 +39,8 @@ export const acceptJob = mutation({
       workerId: userId,
       status: "en_route",
       workerLocation: {
-        lat: 24.7136,
-        lng: 46.6753,
+        lat: 18.0735,
+        lng: -15.9582, // Updated to Nouakchott coordinates
         lastUpdated: Date.now(),
       }
     });
@@ -75,7 +75,7 @@ export const applyPenalty = mutation({
   handler: async (ctx, args) => {
     const job = await ctx.db.get(args.jobId);
     if (!job || !job.workerId) throw new Error("Job or worker not found");
-    const penaltyAmount = args.tier * 25; // Simple logic: Tier 1 = 25, Tier 2 = 50...
+    const penaltyAmount = args.tier * 200; // Adjusted for MRU: Tier 1 = 200, Tier 2 = 400...
     await ctx.runMutation(internal.wallets.deductFunds, {
       userId: job.workerId,
       amount: penaltyAmount,
@@ -139,7 +139,7 @@ export const approveQuote = mutation({
       userId,
       amount: job.quoteAmount,
       type: "payment",
-      description: `دفع قيمة العمل لخدمة: ${job.serviceType}`,
+      description: `دفع قيمة العمل (أوقية) لخدمة: ${job.serviceType}`,
     });
     await ctx.db.patch(args.jobId, {
       status: "approved",

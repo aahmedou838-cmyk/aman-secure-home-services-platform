@@ -32,16 +32,15 @@ export default function ProfilePage() {
     }
   };
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-10">
+    <div className="max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-10 text-rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">الملف الشخصي</h1>
         <SignOutButton />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* User Card */}
         <div className="space-y-6">
           <Card className="rounded-[2rem] border-none bg-aman-teal text-white shadow-xl overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -mr-16 -mt-16" />
+            <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -ms-16 -mt-16" />
             <CardContent className="pt-10 pb-10 flex flex-col items-center text-center space-y-4 relative z-10">
               <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center border-4 border-white/30">
                 <UserCheck className="w-12 h-12" />
@@ -50,14 +49,14 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-bold">{user?.name || user?.email?.split('@')[0]}</h2>
                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 ${isVerified ? 'bg-white/20' : 'bg-destructive/20'} rounded-full text-xs font-bold mt-2`}>
                   <Shield className="w-3 h-3" />
-                  {isVerified ? "هوية موثقة (أمان)" : "بانتظار التوثيق"}
+                  {isVerified ? "هوية موثقة (أمان موريتانيا)" : "بانتظار التوثيق"}
                 </div>
               </div>
               <div className="pt-4 w-full">
                 <Separator className="bg-white/10 mb-4" />
                 <div className="flex justify-between text-sm px-4">
                   <span>رصيد المحفظة:</span>
-                  <span className="font-bold">{wallet?.balance?.toFixed(2) || "0.00"} ر.س</span>
+                  <span className="font-bold">{wallet?.balance?.toFixed(0) || "0"} أ.م</span>
                 </div>
               </div>
             </CardContent>
@@ -75,19 +74,17 @@ export default function ProfilePage() {
                 <span className="text-xs font-bold bg-aman-amber/20 px-2 py-0.5 rounded">آمن (1/5)</span>
               </div>
               <p className="text-[10px] text-muted-foreground leading-relaxed">
-                أي مخالفة قادمة ستؤدي لخصم 50 ر.س فورياً من المحفظة وتجميد الحساب مؤقتاً.
+                أي مخالفة قادمة ستؤدي لخصم 200 أ.م فورياً من المحفظة وتجميد الحساب مؤقتاً.
               </p>
             </CardContent>
           </Card>
         </div>
-        {/* Settings & Operation Center */}
         <div className="md:col-span-2 space-y-6">
-          {/* Operation Center (Demo Access) */}
           <Card className="rounded-[2rem] border-4 border-aman-red/10 shadow-sm overflow-hidden">
             <CardHeader className="bg-aman-red/5">
               <CardTitle className="text-lg flex items-center gap-2 text-aman-red">
                 <ShieldAlert className="w-5 h-5" />
-                مركز العمليات (SOS)
+                مركز العمليات بنواكشوط (SOS)
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
@@ -102,7 +99,7 @@ export default function ProfilePage() {
                     <div key={alert._id} className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-between">
                       <div className="space-y-1">
                         <p className="font-bold text-red-700 text-sm">نداء استغاثة نشط</p>
-                        <p className="text-[10px] text-red-600">التوقيت: {new Date(alert.timestamp).toLocaleTimeString()}</p>
+                        <p className="text-[10px] text-red-600">التوقيت: {new Date(alert.timestamp).toLocaleTimeString("ar-MR")}</p>
                       </div>
                       <Button size="sm" onClick={() => handleResolveAlert(alert._id)} className="bg-red-600 hover:bg-red-700 rounded-xl">إغلاق وتأمين</Button>
                     </div>

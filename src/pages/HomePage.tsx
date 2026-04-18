@@ -1,11 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Shield, MapPin, Zap, Lock, ArrowLeft } from "lucide-react";
+import { Shield, MapPin, Zap, Lock, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 export function HomePage() {
   return (
-    <div className="space-y-24 pb-20 overflow-hidden">
+    <div className="space-y-24 pb-20 overflow-hidden text-rtl">
       {/* Hero Section */}
       <section className="relative pt-12 text-center space-y-8">
         <motion.div
@@ -14,18 +14,18 @@ export function HomePage() {
           className="inline-flex items-center gap-2 px-4 py-2 bg-aman-teal/10 rounded-full text-aman-teal font-bold text-sm border border-aman-teal/20"
         >
           <Shield className="w-4 h-4" />
-          أول منصة خدمات منزلية بمعايير أمنية عالية
+          أول منصة خدمات منزلية بمعايير أمنية في موريتانيا
         </motion.div>
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
           className="text-5xl md:text-7xl font-bold text-balance leading-tight"
         >
-          بيتك في <span className="text-aman-teal">أمان</span> تام مع خبرائنا المعتمدين
+          بيتك في <span className="text-aman-teal">أمان</span> تام مع خبرائنا بنواكشوط
         </motion.h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          نقدم لك خدمات الصيانة والترميم بنظام تتبع ذكي، تسعير شفاف، وحماية كاملة لخصوصيتك وسلامتك.
+          نقدم لك خدمات الصيانة والترميم بنظام تتبع ذكي، تسعير شفاف بالأوقية، وحماية كاملة لخصوصيتك وسلامتك.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Button asChild size="lg" className="h-14 px-8 text-lg rounded-2xl bg-aman-teal hover:bg-aman-teal/90 shadow-xl shadow-aman-teal/20">
@@ -41,19 +41,19 @@ export function HomePage() {
         {[
           {
             title: "تتبع مباشر وGPS",
-            desc: "راقب وصول الفني إليك لحظة بلحظة مع نظام رادار دقيق.",
+            desc: "راقب وصول الفني في أحياء نواكشوط لحظة بلحظة مع نظام رادار دقيق.",
             icon: MapPin,
             color: "bg-blue-500"
           },
           {
-            title: "تسعير عادل وشفاف",
-            desc: "رسوم معاينة ثابتة يتبعها عرض سعر رسمي ملزم دون مفاجآت.",
+            title: "تسعير عادل بالأوقية",
+            desc: "رسوم معاينة ثابتة (200 أ.م) يتبعها عرض سعر رسمي ملزم دون مفاجآت.",
             icon: Zap,
             color: "bg-amber-500"
           },
           {
             title: "زر الطوارئ SOS",
-            desc: "حماية فورية للفني والعميل عبر نظام استغاثة مرتبط بمركز العمليات.",
+            desc: "حماية فورية للفني والعميل عبر نظام استغاثة مرتبط بمركز عمليات نواكشوط.",
             icon: Shield,
             color: "bg-red-500"
           }
@@ -75,17 +75,17 @@ export function HomePage() {
       </section>
       {/* Visual Trust Indicator */}
       <section className="bg-aman-navy text-white rounded-[3rem] p-12 md:p-20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-aman-teal/20 blur-[100px] rounded-full" />
+        <div className="absolute top-0 left-0 w-64 h-64 bg-aman-teal/20 blur-[100px] rounded-full" />
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="space-y-6 max-w-xl">
+          <div className="space-y-6 max-w-xl text-rtl">
             <h2 className="text-3xl md:text-5xl font-bold">تأمين شامل على كل خدمة</h2>
             <p className="text-white/70 text-lg leading-relaxed">
-              نحن نؤمن بأن الثقة هي أساس العمل. لذلك، جميع الخدمات المقدمة عبر منصة أمان مغطاة بتأمين ضد الأخطاء المهنية لضمان حقك.
+              نحن نؤمن بأن الثقة هي أساس العمل. لذلك، جميع الخدمات المقدمة عبر منصة أمان في موريتانيا مغطاة بتأمين لضمان حقك.
             </p>
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
                 <Lock className="w-5 h-5 text-aman-teal" />
-                <span>تحقق جنائي كامل لجميع الفنيين</span>
+                <span>تحقق جنائي كامل لجميع الفنيين الموريتانيين</span>
               </li>
               <li className="flex items-center gap-3">
                 <Lock className="w-5 h-5 text-aman-teal" />

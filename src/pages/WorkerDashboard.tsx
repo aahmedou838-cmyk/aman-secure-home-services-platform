@@ -12,9 +12,11 @@ export default function WorkerDashboard() {
   const triggerSOS = useMutation(api.sos.triggerSOS);
   const availableJobs = useQuery(api.jobs.listAvailableJobs) ?? [];
   const myJobs = useQuery(api.jobs.listWorkerJobs) ?? [];
-  const historyJobs = useQuery(api.jobs.listHistoryJobs, { role: "worker" }) ?? [];
+  const historyJobsRaw = useQuery(api.jobs.listHistoryJobs, { role: "worker" });
+  const historyJobs = useMemo(() => historyJobsRaw ?? [], [historyJobsRaw]);
   const wallet = useQuery(api.wallets.getWallet);
-  const transactions = useQuery(api.wallets.getTransactions) ?? [];
+  const transactionsRaw = useQuery(api.wallets.getTransactions);
+  const transactions = useMemo(() => transactionsRaw ?? [], [transactionsRaw]);
   const acceptJob = useMutation(api.jobs.acceptJob);
   const updateStatus = useMutation(api.jobs.updateJobStatus);
   const completeJob = useMutation(api.jobs.completeJob);
@@ -25,13 +27,12 @@ export default function WorkerDashboard() {
   const [quoteAmount, setQuoteAmount] = useState("");
   const [activeTab, setActiveTab] = useState("available");
   const currentJob = myJobs[0];
-  // GPS Heartbeat Simulation (Smart Refresh Rate: 10s)
+  // GPS Nouakchott Heartbeat Simulation (Smart Refresh Rate: 10s)
   useEffect(() => {
     if (!currentJob || currentJob.status !== "en_route" || !locationSharing) return;
     const interval = setInterval(() => {
-      // Simulate movement towards a destination (drifting)
-      const newLat = (currentJob.workerLocation?.lat ?? 24.7136) + (Math.random() - 0.5) * 0.001;
-      const newLng = (currentJob.workerLocation?.lng ?? 46.6753) + (Math.random() - 0.5) * 0.001;
+      const newLat = (currentJob.workerLocation?.lat ?? 18.0735) + (Math.random() - 0.5) * 0.001;
+      const newLng = (currentJob.workerLocation?.lng ?? -15.9582) + (Math.random() - 0.5) * 0.001;
       updateLocation({
         jobId: currentJob._id,
         lat: newLat,
@@ -39,7 +40,7 @@ export default function WorkerDashboard() {
       }).catch(console.error);
     }, 10000);
     return () => clearInterval(interval);
-  }, [currentJob?._id, currentJob?.status, locationSharing]);
+  }, [currentJob?._id, currentJob?.status, currentJob?.workerLocation, locationSharing, updateLocation]);
   const analytics = useMemo(() => {
     const totalEarned = historyJobs.reduce((acc, job) => acc + (job.quoteAmount ?? 0), 0);
     const totalCommission = transactions
@@ -51,13 +52,13 @@ export default function WorkerDashboard() {
     return { totalEarned, totalCommission, totalInsurance };
   }, [historyJobs, transactions]);
   const handleSOS = async () => {
-    if (confirm("هل أنت متأكد من تفعيل نداء الاستغاثة؟ سيتم إخطار مركز العمليات فوراً.")) {
+    if (confirm("هل أنت متأكد من تفعيل نداء الاستغاثة؟ سيتم إخطار مركز العمليات بنواكشوط فوراً.")) {
       setSosTriggered(true);
       try {
         await triggerSOS({
           jobId: currentJob?._id,
-          lat: currentJob?.workerLocation?.lat ?? 24.7136,
-          lng: currentJob?.workerLocation?.lng ?? 46.6753
+          lat: currentJob?.workerLocation?.lat ?? 18.0735,
+          lng: currentJob?.workerLocation?.lng ?? -15.9582
         });
         toast.error("تم إرسال نداء الاستغاثة بنجاح. ابق في مكان آمن.");
       } catch (e) {
@@ -134,20 +135,20 @@ export default function WorkerDashboard() {
           </div>
         )}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
+          <div className="text-rtl">
             <h1 className="text-3xl font-bold">لوحة تحكم الفني</h1>
-            <p className="text-muted-foreground">أهلاً بك. حافظ على سلامتك دائماً.</p>
+            <p className="text-muted-foreground">أهلاً بك - أمان موريتانيا.</p>
           </div>
           <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
             <div className="flex items-center gap-4 bg-aman-navy text-white p-3 px-6 rounded-2xl shadow-lg">
               <Wallet className="w-5 h-5 text-aman-teal" />
               <div>
                 <p className="text-[10px] opacity-70 uppercase font-bold">رصيد الأرباح</p>
-                <p className="text-lg font-bold">{wallet?.balance?.toFixed(2) ?? "0.00"} ر.س</p>
+                <p className="text-lg font-bold">{wallet?.balance?.toFixed(0) ?? "0"} أ.م</p>
               </div>
             </div>
             <div className="flex items-center gap-4 bg-card p-3 rounded-2xl border shadow-sm">
-              <div className="px-2">
+              <div className="pe-2 text-rtl">
                  <p className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-tighter">مشاركة الموقع (GPS)</p>
                  <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${locationSharing ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
@@ -185,14 +186,14 @@ export default function WorkerDashboard() {
                     <CardHeader className="bg-aman-teal/5 pb-4">
                       <div className="flex justify-between items-start">
                         <span className="text-[10px] font-bold bg-aman-teal text-white px-2 py-1 rounded">معاينة فورية</span>
-                        <span className="text-xs text-muted-foreground font-bold">{new Date(job.createdAt).toLocaleTimeString("ar-SA")}</span>
+                        <span className="text-xs text-muted-foreground font-bold">{new Date(job.createdAt).toLocaleTimeString("ar-MR")}</span>
                       </div>
                       <CardTitle className="text-xl font-bold mt-2">{job.serviceType}</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6 space-y-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground text-rtl">
                         <MapPin className="w-4 h-4 text-aman-teal" />
-                        <span>حي النخيل (على بعد 2.4 كم)</span>
+                        <span>تفرغ زينة (على بعد 1.2 كم)</span>
                       </div>
                       <Button onClick={() => handleAccept(job._id)} className="w-full rounded-xl bg-aman-teal h-11 font-bold">قبول المهمة</Button>
                     </CardContent>
@@ -206,16 +207,16 @@ export default function WorkerDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Card className="rounded-[2.5rem] border-aman-teal/20 shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
+                    <CardTitle className="flex items-center justify-between text-rtl">
                       <div className="flex items-center gap-2">
                         <Briefcase className="w-5 h-5 text-aman-teal" />
                         <span>تفاصيل المهمة</span>
                       </div>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 text-rtl">
                     <div className="p-6 bg-muted rounded-[2rem] space-y-4">
-                      <div className="flex items-center gap-3"><MapPin className="w-5 h-5 text-aman-teal" /><span className="font-bold">موقع العميل: الرياض</span></div>
+                      <div className="flex items-center gap-3"><MapPin className="w-5 h-5 text-aman-teal" /><span className="font-bold">موقع العميل: نواكشوط</span></div>
                       <div className="flex items-center gap-3"><AlertCircle className="w-5 h-5 text-aman-teal" /><span>{currentJob.serviceType}</span></div>
                       {currentJob.workerLocation && (
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -234,8 +235,8 @@ export default function WorkerDashboard() {
                     {(currentJob.status === "inspection_complete" || currentJob.status === "quote_pending") && (
                       <div className="space-y-3 pt-4 border-t">
                         <div className="flex gap-2">
-                          <input type="number" value={quoteAmount} onChange={(e) => setQuoteAmount(e.target.value)} placeholder="المبلغ (ر.س)" className="flex-1 bg-secondary rounded-xl px-4 h-12" />
-                          <Button onClick={handleSubmitQuote} className="rounded-xl bg-aman-teal w-12 h-12"><Send className="w-5 h-5" /></Button>
+                          <input type="number" value={quoteAmount} onChange={(e) => setQuoteAmount(e.target.value)} placeholder="المبلغ (أ.م)" className="flex-1 bg-secondary rounded-xl px-4 h-12" />
+                          <Button onClick={handleSubmitQuote} className="rounded-xl bg-aman-teal w-12 h-12"><Send className="w-5 h-5 rotate-180" /></Button>
                         </div>
                       </div>
                     )}
@@ -261,17 +262,17 @@ export default function WorkerDashboard() {
                 <Card className="rounded-3xl p-6 bg-aman-teal/5 border-aman-teal/20 text-center">
                   <TrendingUp className="w-8 h-8 text-aman-teal mx-auto mb-4" />
                   <p className="text-sm text-muted-foreground font-bold">إجمالي الأرباح</p>
-                  <p className="text-3xl font-bold text-aman-teal">{analytics.totalEarned.toFixed(2)} ر.س</p>
+                  <p className="text-3xl font-bold text-aman-teal">{analytics.totalEarned.toFixed(0)} أ.م</p>
                 </Card>
                 <Card className="rounded-3xl p-6 bg-aman-navy/5 border-aman-navy/20 text-center">
                   <PieChart className="w-8 h-8 text-aman-navy mx-auto mb-4" />
                   <p className="text-sm text-muted-foreground font-bold">عمولات المنصة المدفوعة</p>
-                  <p className="text-3xl font-bold text-aman-navy">{analytics.totalCommission.toFixed(2)} ر.س</p>
+                  <p className="text-3xl font-bold text-aman-navy">{analytics.totalCommission.toFixed(0)} أ.م</p>
                 </Card>
                 <Card className="rounded-3xl p-6 bg-aman-amber/5 border-aman-amber/20 text-center">
                   <ShieldAlert className="w-8 h-8 text-aman-amber mx-auto mb-4" />
                   <p className="text-sm text-muted-foreground font-bold">صندوق التأمين الشخصي</p>
-                  <p className="text-3xl font-bold text-aman-amber">{analytics.totalInsurance.toFixed(2)} ر.س</p>
+                  <p className="text-3xl font-bold text-aman-amber">{analytics.totalInsurance.toFixed(0)} أ.م</p>
                 </Card>
              </div>
           </TabsContent>

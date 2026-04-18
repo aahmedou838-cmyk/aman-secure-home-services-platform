@@ -26,7 +26,7 @@ export function JobHistory({ jobs }: { jobs: Job[] }) {
           <CardContent className="p-0">
             <div className="flex items-stretch">
               <div className="w-2 bg-aman-teal" />
-              <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 text-rtl">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-lg">{job.serviceType}</h3>
@@ -38,7 +38,7 @@ export function JobHistory({ jobs }: { jobs: Job[] }) {
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      <span>{new Date(job._creationTime).toLocaleDateString("ar-SA")}</span>
+                      <span>{new Date(job._creationTime).toLocaleDateString("ar-MR")}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Briefcase className="w-3 h-3" />
@@ -47,11 +47,11 @@ export function JobHistory({ jobs }: { jobs: Job[] }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="text-left md:text-right">
+                  <div className="text-right">
                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">إجمالي المدفوع</p>
                     <div className="flex items-center gap-1.5 font-bold text-xl text-aman-navy">
                       <ReceiptText className="w-4 h-4 text-aman-teal opacity-60" />
-                      <span>{(job.quoteAmount ?? job.inspectionFee).toFixed(2)} ر.س</span>
+                      <span>{(job.quoteAmount ?? job.inspectionFee).toFixed(0)} أ.م</span>
                     </div>
                   </div>
                 </div>
@@ -65,16 +65,16 @@ export function JobHistory({ jobs }: { jobs: Job[] }) {
 }
 function History({ className }: { className?: string }) {
   return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       className={className}
     >
       <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />

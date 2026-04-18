@@ -24,15 +24,15 @@ export default function ClientDashboard() {
     }
   }, [user, wallet, ensureWallet]);
   const handleRequestService = async () => {
-    if (!wallet || wallet.balance < 50) {
-      toast.error("رصيدك لا يكفي لرسوم المعاينة (50 ر.س)");
+    if (!wallet || wallet.balance < 200) {
+      toast.error("رصيدك لا يكفي لرسوم المعاينة (200 أ.م)");
       return;
     }
     setLoading(true);
     try {
       await createJob({
         serviceType: "سباكة - كشف تسربات",
-        inspectionFee: 50,
+        inspectionFee: 200,
       });
       toast.success("تم طلب المعاينة بنجاح");
     } catch (error: any) {
@@ -53,14 +53,12 @@ export default function ClientDashboard() {
       toast.error(error.message || "حدث خطأ أثناء الموافقة");
     }
   };
-  // Distance helper (Mocked baseline)
   const calculateDistance = (workerLocation?: { lat: number, lng: number }) => {
     if (!workerLocation) return 500;
-    // Simple Euclidean distance simulation for web MVP
-    const clientLoc = { lat: 24.7136, lng: 46.6753 };
+    const clientLoc = { lat: 18.0735, lng: -15.9582 }; // Nouakchott center
     const dLat = Math.abs(clientLoc.lat - workerLocation.lat);
     const dLng = Math.abs(clientLoc.lng - workerLocation.lng);
-    return Math.round((dLat + dLng) * 111139); // Approx meters
+    return Math.round((dLat + dLng) * 111139);
   };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,7 +66,7 @@ export default function ClientDashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">مرحباً بك</h1>
-            <p className="text-muted-foreground">تحكم بطلباتك وأموالك في أمان</p>
+            <p className="text-muted-foreground">تحكم بطلباتك وأموالك في أمان - نواكشوط</p>
           </div>
           <Button onClick={handleRequestService} disabled={loading} className="rounded-2xl h-12 px-6 gap-2 bg-aman-teal hover:bg-aman-teal/90">
             <Plus className="w-5 h-5" />
@@ -90,7 +88,7 @@ export default function ClientDashboard() {
                   </Card>
                 ) : (
                   activeJobs.map((job) => (
-                    <Card key={job._id} className="overflow-hidden border-r-4 border-r-aman-teal rounded-[2rem] shadow-sm">
+                    <Card key={job._id} className="overflow-hidden border-s-4 border-s-aman-teal rounded-[2rem] shadow-sm">
                       <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row justify-between gap-6">
                           <div className="flex-1 space-y-4">
@@ -100,7 +98,7 @@ export default function ClientDashboard() {
                             </div>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                               <Clock className="w-4 h-4" />
-                              <span>{new Date(job.createdAt).toLocaleDateString("ar-SA")}</span>
+                              <span>{new Date(job.createdAt).toLocaleDateString("ar-MR")}</span>
                               <div className="flex items-center gap-1">
                                 <span className="w-2 h-2 rounded-full bg-aman-teal animate-pulse" />
                                 <span className="font-bold text-aman-teal uppercase tracking-widest text-[10px]">{job.status}</span>
@@ -108,22 +106,22 @@ export default function ClientDashboard() {
                             </div>
                             {job.status === "quote_pending" && job.quoteAmount && (
                               <div className="p-5 bg-aman-navy/5 rounded-2xl border border-aman-navy/10 space-y-3">
-                                <p className="text-3xl font-bold text-aman-navy">{job.quoteAmount} ر.س</p>
+                                <p className="text-3xl font-bold text-aman-navy">{job.quoteAmount} أ.م</p>
                                 <Button onClick={() => handleApproveQuote(job._id, job.quoteAmount!)} className="w-full rounded-xl bg-aman-teal">الموافقة وبدء العمل</Button>
                               </div>
                             )}
                             {job.workerLocation && (
                               <div className="flex items-center gap-2 text-xs text-aman-teal bg-aman-teal/5 p-3 rounded-xl border border-aman-teal/10">
                                 <MapPin className="w-4 h-4" />
-                                <span>موقع الفني محدث الآن: حي النخيل</span>
+                                <span>موقع الفني محدث الآن: تفرغ زينة</span>
                               </div>
                             )}
                           </div>
                           {["en_route", "arrived"].includes(job.status) && (
                             <div className="flex-shrink-0 w-full md:w-64">
-                              <GpsRadar 
-                                status={job.status === "en_route" ? "الفني في الطريق" : "وصل الفني"} 
-                                isArrived={job.status === "arrived"} 
+                              <GpsRadar
+                                status={job.status === "en_route" ? "الفني في الطريق" : "وصل الفني"}
+                                isArrived={job.status === "arrived"}
                                 distance={calculateDistance(job.workerLocation)}
                                 lat={job.workerLocation?.lat}
                                 lng={job.workerLocation?.lng}
@@ -145,15 +143,15 @@ export default function ClientDashboard() {
             <Card className="bg-aman-navy text-white rounded-[2rem] overflow-hidden border-none shadow-xl">
               <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Wallet className="w-5 h-5" />رصيد المحفظة</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-4xl font-bold">{wallet?.balance?.toFixed(2) ?? "0.00"} ر.س</div>
+                <div className="text-4xl font-bold">{wallet?.balance?.toFixed(0) ?? "0"} أ.م</div>
                 <WalletTopUp />
               </CardContent>
             </Card>
             <Card className="rounded-[2rem] border-none shadow-sm bg-muted/30">
-              <CardHeader><CardTitle className="text-lg font-bold">مركز الأمان</CardTitle></CardHeader>
-              <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <div className="flex gap-3 items-start"><Shield className="w-5 h-5 text-aman-teal" /><p>الفنيين لدينا معتمدون وخاضعون للتحقق الجنائي.</p></div>
-                <div className="flex gap-3 items-start"><CheckCircle2 className="w-5 h-5 text-aman-teal" /><p>تأمين شامل ضد الأخطاء المهنية بحد أقصى 5000 ر.س.</p></div>
+              <CardHeader><CardTitle className="text-lg font-bold text-rtl">مركز الأمان</CardTitle></CardHeader>
+              <CardContent className="space-y-4 text-sm text-muted-foreground text-rtl">
+                <div className="flex gap-3 items-start"><Shield className="w-5 h-5 text-aman-teal" /><p>الفنيين لدينا معتمدون وخاضعون للتحقق الجنائي بموريتانيا.</p></div>
+                <div className="flex gap-3 items-start"><CheckCircle2 className="w-5 h-5 text-aman-teal" /><p>تأمين شامل ضد الأخطاء المهنية بحد أقصى 20,000 أ.م.</p></div>
               </CardContent>
             </Card>
           </div>

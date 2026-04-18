@@ -5,7 +5,7 @@ const applicationTables = {
   wallets: defineTable({
     userId: v.id("users"),
     balance: v.number(),
-    currency: v.string(), // e.g. "SAR"
+    currency: v.string(), // Default changed to "MRU" (Mauritanian Ouguiya)
   }).index("by_userId", ["userId"]),
   wallet_transactions: defineTable({
     walletId: v.id("wallets"),

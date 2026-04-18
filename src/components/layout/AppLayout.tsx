@@ -5,7 +5,7 @@ import { Authenticated, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
-export function AppLayout() {
+function NavContent() {
   const { pathname } = useLocation();
   const wallet = useQuery(api.wallets.getWallet);
   const navItems = [
@@ -15,8 +15,7 @@ export function AppLayout() {
     { label: "الملف الشخصي", path: "/profile", icon: Shield },
   ];
   return (
-    <div className="min-h-screen flex flex-col bg-background font-sans" dir="rtl">
-      {/* Top Navbar */}
+    <>
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -24,7 +23,7 @@ export function AppLayout() {
               <div className="w-8 h-8 bg-aman-teal rounded-lg flex items-center justify-center text-white">
                 <Shield className="w-5 h-5" />
               </div>
-              <span className="text-xl font-bold text-aman-teal">أمان</span>
+              <span className="text-xl font-bold text-aman-teal">أمان موريتانيا</span>
             </Link>
           </div>
           <div className="flex items-center gap-4">
@@ -35,7 +34,7 @@ export function AppLayout() {
                   {wallet === undefined ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    `${wallet?.balance?.toFixed(2) ?? "0.00"} ر.س`
+                    `${wallet?.balance?.toFixed(0) ?? "0"} أ.م`
                   )}
                 </span>
               </div>
@@ -48,7 +47,6 @@ export function AppLayout() {
           </div>
         </div>
       </header>
-      {/* Main Content */}
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-8 md:py-10 lg:py-12">
@@ -56,7 +54,6 @@ export function AppLayout() {
           </div>
         </div>
       </main>
-      {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t px-4 py-3 pb-safe">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
@@ -77,6 +74,13 @@ export function AppLayout() {
           })}
         </div>
       </nav>
+    </>
+  );
+}
+export function AppLayout() {
+  return (
+    <div className="min-h-screen flex flex-col bg-background font-sans" dir="rtl">
+      <NavContent />
     </div>
   );
 }
