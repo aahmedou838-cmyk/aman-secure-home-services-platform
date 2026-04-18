@@ -1,6 +1,6 @@
 # Cloudflare Workers + React + Convex Template
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/aahmedou838-cmyk/aman-secure-home-services-platform)
 
 A production-ready full-stack application template built with **Cloudflare Workers** for API routing, **React** with **shadcn/ui** for the frontend, and **Convex** for a reactive database, authentication, and file storage. Features secure email/password auth with OTP verification, file upload/management, responsive design with dark mode, and seamless deployment to Cloudflare.
 
@@ -128,7 +128,7 @@ Deploy to **Cloudflare** in minutes:
    - Set `VITE_CONVEX_URL` in Pages env vars
    - Bind custom domain via Cloudflare dashboard
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/aahmedou838-cmyk/aman-secure-home-services-platform)
 
 Production URLs:
 - Frontend: `<your-pages>.pages.dev`
