@@ -4,14 +4,15 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 export const getWallet = query({
   args: {},
-  returns: v.union(v.object({ _id: v.id("wallets"), userId: v.id("users"), balance: v.number(), currency: v.string() }), v.null()),
+  returns: v.union(v.object({ _id: v.id("wallets"), userId: v.id("users"), balance: v.number(), currency: v.optional(v.string()) }), v.null()),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    return await ctx.db
+    return (await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .order("asc")
+      .take(1))[0] || null;
   },
 });
 export const ensureWallet = mutation({
@@ -20,10 +21,11 @@ export const ensureWallet = mutation({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
-    const existing = await ctx.db
+    const existing = (await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .order("asc")
+      .take(1))[0];
     if (existing) return existing._id;
     return await ctx.db.insert("wallets", {
       userId,
@@ -59,10 +61,11 @@ export const topUp = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
-    let wallet = await ctx.db
+    let wallet = (await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .order("asc")
+      .take(1))[0];
     if (!wallet) {
       const walletId = await ctx.db.insert("wallets", {
         userId,
@@ -74,6 +77,9 @@ export const topUp = mutation({
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
       });
+    }
+    if (wallet && (!wallet.currency || wallet.currency !== 'MRU')) {
+      await ctx.db.patch(wallet._id, { currency: 'MRU' });
     }
     if (wallet) {
       await ctx.db.insert("wallet_transactions", {
@@ -96,10 +102,11 @@ export const creditFunds = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    let wallet = await ctx.db
+    let wallet = (await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .unique();
+      .order("asc")
+      .take(1))[0];
     if (!wallet) {
       const walletId = await ctx.db.insert("wallets", {
         userId: args.userId,
@@ -111,6 +118,9 @@ export const creditFunds = internalMutation({
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
       });
+    }
+    if (wallet && (!wallet.currency || wallet.currency !== 'MRU')) {
+      await ctx.db.patch(wallet._id, { currency: 'MRU' });
     }
     if (wallet) {
       await ctx.db.insert("wallet_transactions", {
@@ -133,10 +143,14 @@ export const deductFunds = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const wallet = await ctx.db
+    const wallet = (await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .unique();
+      .order("asc")
+      .take(1))[0];
+    if (wallet && (!wallet.currency || wallet.currency !== 'MRU')) {
+      await ctx.db.patch(wallet._id, { currency: 'MRU' });
+    }
     if (!wallet || wallet.balance < args.amount) {
       throw new Error("رصيد غير كافٍ بالأوقية");
     }
@@ -172,10 +186,11 @@ export const processPayout = internalMutation({
       type: "payout",
       description: `دفعة مستحقة (أوقية) للمهمة رقم: ${args.jobId.slice(-6)}`,
     });
-    const wallet = await ctx.db
+    const wallet = (await ctx.db
       .query("wallets")
       .withIndex("by_userId", (q) => q.eq("userId", args.workerId))
-      .unique();
+      .order("asc")
+      .take(1))[0];
     if (wallet) {
       await ctx.db.insert("wallet_transactions", {
         walletId: wallet._id,

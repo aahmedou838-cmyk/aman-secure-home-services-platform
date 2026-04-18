@@ -3,7 +3,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { CreditCard, Loader2, Landmark } from "lucide-react";
 import { toast } from "sonner";
 export function WalletTopUp() {
@@ -46,6 +46,7 @@ export function WalletTopUp() {
             <Landmark className="w-6 h-6 text-aman-teal" />
             شحن رصيد المحفظة
           </DialogTitle>
+          <DialogDescription className='text-base text-muted-foreground mt-1'>شحن رصيد محفظتك بأمان عبر بوابة الدفع الموريتانية الآمنة</DialogDescription>
         </DialogHeader>
         <div className="py-6 space-y-6">
           <div className="grid grid-cols-2 gap-3">
