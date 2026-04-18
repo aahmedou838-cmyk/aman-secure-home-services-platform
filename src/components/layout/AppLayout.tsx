@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Home, User, Briefcase, Wallet, Shield, Loader2, BadgeCheck } from "lucide-react";
-import { Authenticated, useQuery, useConvexAuth } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
@@ -26,30 +26,32 @@ function NavContent() {
               <div className="w-10 h-10 bg-aman-teal rounded-xl flex items-center justify-center text-white shadow-lg shadow-aman-teal/20">
                 <Shield className="w-6 h-6" />
               </div>
-              <div className="hidden sm:block">
-                <span className="text-2xl font-black text-aman-teal transition-all hover:tracking-wider">أمان</span>
-                <span className="text-xs block text-muted-foreground -mt-1 font-bold animate-pulse">موريتانيا</span>
+              <div className="hidden sm:block text-right">
+                <span className="text-2xl font-black text-aman-teal block">أمان</span>
+                <span className="text-[10px] block text-muted-foreground -mt-1 font-bold">نواكشوط</span>
               </div>
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {isLoading ? (
                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             ) : isAuthenticated ? (
               <>
-                <NotificationCenter />
-                <div className="flex items-center gap-2 px-4 py-2 bg-aman-navy text-white rounded-2xl shadow-md border border-white/10">
-                  <Wallet className="w-4 h-4 text-aman-teal" />
-                  <span className="text-sm font-black whitespace-nowrap">
-                    {wallet === undefined ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      `${wallet?.balance?.toFixed(0) ?? "0"} أ.م`
-                    )}
-                  </span>
+                <div className="flex items-center gap-2">
+                  <NotificationCenter />
+                  <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-aman-navy text-white rounded-2xl shadow-md border border-white/10">
+                    <Wallet className="w-3 h-3 sm:w-4 sm:h-4 text-aman-teal" />
+                    <span className="text-xs sm:text-sm font-black whitespace-nowrap">
+                      {wallet === undefined ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        `${wallet?.balance?.toFixed(0) ?? "0"} أ.م`
+                      )}
+                    </span>
+                  </div>
                 </div>
                 {user?.role === "provider" && (
-                  <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-aman-teal/20 to-aman-amber/10 rounded-full border border-aman-teal/20 text-aman-teal shadow-inner">
+                  <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-aman-teal/20 to-aman-amber/10 rounded-full border border-aman-teal/20 text-aman-teal shadow-[0_0_10px_rgba(15,118,110,0.2)]">
                     <BadgeCheck className="w-4 h-4" />
                     <span className="text-[10px] font-black uppercase tracking-tighter">فني معتمد</span>
                   </div>
@@ -57,11 +59,14 @@ function NavContent() {
                 <Link to="/profile" className="hidden sm:flex w-10 h-10 items-center justify-center bg-muted hover:bg-muted/80 rounded-xl transition-all">
                   <User className="w-5 h-5 text-muted-foreground" />
                 </Link>
-                <SignOutButton />
+                <div className="hidden sm:block">
+                  <SignOutButton />
+                </div>
               </>
             ) : (
-              <div className="flex items-center gap-2">
-              </div>
+              <Link to="/profile">
+                <Button className="rounded-xl bg-aman-teal h-10 px-4">تسجيل الدخول</Button>
+              </Link>
             )}
             <ThemeToggle className="static" />
           </div>
