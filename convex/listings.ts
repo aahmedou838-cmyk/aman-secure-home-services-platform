@@ -56,8 +56,7 @@ export const getMyListings = query({
       .query("providers_listings")
       .withIndex("by_providerId_active", (q) => q.eq("providerId", userId).eq("active", true))
       .order("desc")
-      .take(50)
-      .collect();
+      .take(50);
   },
 });
 export const getListingsByCategory = query({
@@ -67,7 +66,6 @@ export const getListingsByCategory = query({
       .query("providers_listings")
       .withIndex("by_category_active", (q) => q.eq("category", args.category).eq("active", true))
       .order("desc")
-      .take(50)
-      .collect();
+      .take(50);
   },
 });
