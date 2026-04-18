@@ -1,149 +1,105 @@
-// Home page of the app, Currently a demo page for demonstration.
-// Please rewrite this file to implement your own logic. Do not replace or delete it, simply rewrite this HomePage.tsx file.
-import { useEffect, useState, useMemo } from 'react'
-import { Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { Toaster, toast } from '@/components/ui/sonner'
-
-// Convex Auth block
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { SignInForm } from "../components/SignInForm";
-import { SignOutButton } from "../components/SignOutButton";
-import { TemplateDemo, HAS_TEMPLATE_DEMO } from '@/components/TemplateDemo';
-
-//import { useQuery, useMutation } from 'convex/react';
-//import { api } from '@convex/_generated/api';
-
-// Timer store: independent slice with a clear, minimal API, for demonstration
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
+import React from "react";
+import { Link } from "react-router-dom";
+import { Shield, MapPin, Zap, Lock, ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 export function HomePage() {
-  // Select only what is needed to avoid unnecessary re-renders
-  const [coins, setCoins] = useState(0)
-  const [isRunning, setIsRunning] = useState(false)
-  const [startedAt, setStartedAt] = useState<number | null>(null)
-  const [elapsedMs, setElapsedMs] = useState(0)
-
-  useEffect(() => {
-    if (!isRunning || startedAt === null) return
-
-    const t = setInterval(() => {
-      setElapsedMs(Date.now() - startedAt)
-    }, 250)
-
-    return () => clearInterval(t)
-  }, [isRunning, startedAt])
-
-  const formatted = useMemo(() => formatDuration(elapsedMs), [elapsedMs])
-
-  const onPleaseWait = () => {
-    setCoins((c) => c + 1)
-
-    if (!isRunning) {
-      // Resume from the current elapsed time
-      setStartedAt(Date.now() - elapsedMs)
-      setIsRunning(true)
-      toast.success('Building your app…', {
-        description: "Hang tight, we're setting everything up.",
-      })
-      return
-    } 
-
-      setIsRunning(false)
-      toast.info('Taking a short pause', {
-        description: 'We\'ll continue shortly.',
-      })
-  }
-
-  const onReset = () => {
-    setCoins(0)
-    setIsRunning(false)
-    setStartedAt(null)
-    setElapsedMs(0)
-    toast('Reset complete')
-  }
-
-  const onAddCoin = () => {
-    setCoins((c) => c + 1)
-    toast('Coin added')
-  }
-
-  const loggedInUser = useQuery(api.auth.loggedInUser)
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-        <ThemeToggle />
-        <SignOutButton />
-        <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-        <div className="text-center space-y-8 relative z-10 animate-fade-in w-full">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-              <Sparkles className="w-8 h-8 text-white rotating" />
-            </div>
-          </div>
-          <Authenticated>
-            <p className="text-xl text-secondary">
-              Welcome back, {loggedInUser?.email ?? "friend"}!
-            </p>
-          </Authenticated>
-          <Unauthenticated>
-            <p className="text-xl text-secondary">Sign in to get started</p>
-          </Unauthenticated>
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
-          </p>
-          {HAS_TEMPLATE_DEMO ? (
-            <div className="max-w-5xl mx-auto text-left">
-              <TemplateDemo />
-            </div>
-          ) : (
-            <>
-              <div className="flex justify-center gap-4">
-                <Button 
-                  size="lg"
-                  onClick={onPleaseWait}
-                  className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-                  aria-live="polite"
-                >
-                  Please Wait
-                </Button>
-              </div>
-              <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-                <div>
-                  Time elapsed: <span className="font-medium tabular-nums text-foreground">{formatted}</span>
-                </div>
-                <div>
-                  Coins: <span className="font-medium tabular-nums text-foreground">{coins}</span>
-                </div>
-              </div>
-              <div className="flex justify-center gap-2">
-                <Button variant="outline" size="sm" onClick={onReset}>
-                  Reset
-                </Button>
-                <Button variant="outline" size="sm" onClick={onAddCoin}>
-                  Add Coin
-                </Button>
-              </div>
-            </>
-          )}
+    <div className="space-y-24 pb-20 overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative pt-12 text-center space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-aman-teal/10 rounded-full text-aman-teal font-bold text-sm border border-aman-teal/20"
+        >
+          <Shield className="w-4 h-4" />
+          أول منصة خدمات منزلية بمعايير أمنية عالية
+        </motion.div>
+        <motion.h1 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-5xl md:text-7xl font-bold text-balance leading-tight"
+        >
+          بيتك في <span className="text-aman-teal">أمان</span> تام مع خبرائنا المعتمدين
+        </motion.h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          نقدم لك خدمات الصيانة والترميم بنظام تتبع ذكي، تسعير شفاف، وحماية كاملة لخصوصيتك وسلامتك.
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Button asChild size="lg" className="h-14 px-8 text-lg rounded-2xl bg-aman-teal hover:bg-aman-teal/90 shadow-xl shadow-aman-teal/20">
+            <Link to="/client-dashboard">أطلب خدمة الآن</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg rounded-2xl border-2">
+            <Link to="/worker-dashboard">انضم كفني معتمد</Link>
+          </Button>
         </div>
-        <Unauthenticated>
-          <SignInForm />
-        </Unauthenticated>
-        <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-          <p>Built with love at Andromo</p>
-        </footer>
-        <Toaster richColors closeButton />
-      </div>
-  )
+      </section>
+      {/* Safety Features Grid */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[
+          {
+            title: "تتبع مباشر وGPS",
+            desc: "راقب وصول الفني إليك لحظة بلحظة مع نظام رادار دقيق.",
+            icon: MapPin,
+            color: "bg-blue-500"
+          },
+          {
+            title: "تسعير عادل وشفاف",
+            desc: "رسوم معاينة ثابتة يتبعها عرض سعر رسمي ملزم دون مفاجآت.",
+            icon: Zap,
+            color: "bg-amber-500"
+          },
+          {
+            title: "زر الطوارئ SOS",
+            desc: "حماية فورية للفني والعميل عبر نظام استغاثة مرتبط بمركز العمليات.",
+            icon: Shield,
+            color: "bg-red-500"
+          }
+        ].map((feat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="p-8 rounded-3xl border bg-card hover:shadow-2xl transition-all group"
+          >
+            <div className={`w-14 h-14 ${feat.color} rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
+              <feat.icon className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">{feat.title}</h3>
+            <p className="text-muted-foreground leading-relaxed">{feat.desc}</p>
+          </motion.div>
+        ))}
+      </section>
+      {/* Visual Trust Indicator */}
+      <section className="bg-aman-navy text-white rounded-[3rem] p-12 md:p-20 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-aman-teal/20 blur-[100px] rounded-full" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+          <div className="space-y-6 max-w-xl">
+            <h2 className="text-3xl md:text-5xl font-bold">تأمين شامل على كل خدمة</h2>
+            <p className="text-white/70 text-lg leading-relaxed">
+              نحن نؤمن بأن الثقة هي أساس العمل. لذلك، جميع الخدمات المقدمة عبر منصة أمان مغطاة بتأمين ضد الأخطاء المهنية لضمان حقك.
+            </p>
+            <ul className="space-y-3">
+              <li className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-aman-teal" />
+                <span>تحقق جنائي كامل لجميع الفنيين</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-aman-teal" />
+                <span>نظام تقييم ومحاسبة صارم من 5 مستويات</span>
+              </li>
+            </ul>
+          </div>
+          <div className="flex-shrink-0">
+             <div className="w-48 h-48 border-8 border-white/10 rounded-full flex items-center justify-center">
+                <Shield className="w-24 h-24 text-aman-teal" />
+             </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }

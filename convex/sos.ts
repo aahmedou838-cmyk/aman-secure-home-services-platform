@@ -29,20 +29,3 @@ export const getActiveAlerts = query({
       .collect();
   },
 });
-export const getAllAlerts = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db
-      .query("sos_alerts")
-      .order("desc")
-      .collect();
-  },
-});
-export const resolveSOS = mutation({
-  args: { alertId: v.id("sos_alerts") },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.alertId, {
-      resolved: true,
-    });
-  },
-});
