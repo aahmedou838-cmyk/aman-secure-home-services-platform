@@ -14,9 +14,8 @@ export default function WorkerDashboard() {
   const user = useQuery(api.profiles.currentUser);
   const wallet = useQuery(api.wallets.getWallet);
   const triggerSOS = useMutation(api.sos.triggerSOS);
-  // Use user specialties if they exist to filter available jobs
-  const availableJobs = useQuery(api.jobs.listAvailableJobs, { 
-    providerSpecialties: user?.specialties ?? [] 
+  const availableJobs = useQuery(api.jobs.listAvailableJobs, {
+    providerSpecialties: user?.specialties ?? []
   }) ?? [];
   const myJobs = useQuery(api.jobs.listWorkerJobs) ?? [];
   const historyJobsRaw = useQuery(api.jobs.listHistoryJobs, { role: "worker" });
@@ -57,7 +56,8 @@ export default function WorkerDashboard() {
       .reduce((acc, t) => acc + t.amount, 0);
     return { totalEarned, totalCommission, totalInsurance };
   }, [historyJobs, transactions]);
-  if (user && user.role === "client") {
+  // Handle users who are either "client" or newly registered (no role assigned yet)
+  if (user && user.role !== "provider") {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-8 text-rtl">
         <div className="w-24 h-24 bg-aman-teal/10 rounded-3xl flex items-center justify-center mx-auto text-aman-teal">
@@ -69,9 +69,9 @@ export default function WorkerDashboard() {
             هل أنت فني محترف؟ انضم لأكبر منصة خدمات منزلية آمنة في موريتانيا وابدأ استقبال الطلبات في منطقتك.
           </p>
         </div>
-        <Button 
-          size="lg" 
-          onClick={() => setShowRegModal(true)} 
+        <Button
+          size="lg"
+          onClick={() => setShowRegModal(true)}
           className="rounded-2xl h-16 px-10 text-xl font-bold bg-aman-teal hover:bg-aman-teal/90 shadow-xl shadow-aman-teal/20"
         >
           سجل كفني الآن
@@ -189,16 +189,16 @@ export default function WorkerDashboard() {
                        <p className="text-muted-foreground">رقم الطلب: {currentJob._id.slice(-6)}</p>
                      </div>
                      <div className="grid grid-cols-2 gap-3">
-                       <Button 
-                         disabled={currentJob.status !== "en_route"} 
-                         onClick={() => updateStatus({ jobId: currentJob._id, status: "arrived" })} 
+                       <Button
+                         disabled={currentJob.status !== "en_route"}
+                         onClick={() => updateStatus({ jobId: currentJob._id, status: "arrived" })}
                          className="rounded-xl h-12"
                        >
                          تأكيد الوصول
                        </Button>
-                       <Button 
-                         disabled={currentJob.status !== "arrived"} 
-                         onClick={() => updateStatus({ jobId: currentJob._id, status: "inspection_complete" })} 
+                       <Button
+                         disabled={currentJob.status !== "arrived"}
+                         onClick={() => updateStatus({ jobId: currentJob._id, status: "inspection_complete" })}
                          className="rounded-xl h-12"
                        >
                          إنهاء المعاينة
@@ -208,18 +208,18 @@ export default function WorkerDashboard() {
                        <div className="p-4 bg-muted rounded-2xl space-y-3">
                          <p className="text-sm font-bold">تقديم عرض سعر نهائي:</p>
                          <div className="flex gap-2">
-                            <input 
-                              type="number" 
-                              value={quoteAmount} 
-                              onChange={(e) => setQuoteAmount(e.target.value)} 
-                              placeholder="المبلغ بالأوقية" 
+                            <input
+                              type="number"
+                              value={quoteAmount}
+                              onChange={(e) => setQuoteAmount(e.target.value)}
+                              placeholder="المبلغ بالأوقية"
                               className="flex-1 rounded-xl px-4 bg-background border-none h-12 font-bold"
                             />
-                            <Button 
+                            <Button
                               onClick={() => {
                                 submitQuote({ jobId: currentJob._id, amount: Number(quoteAmount) });
                                 setQuoteAmount("");
-                              }} 
+                              }}
                               className="bg-aman-teal h-12 w-12 rounded-xl"
                             >
                               <Send className="w-5 h-5 rotate-180" />
@@ -228,8 +228,8 @@ export default function WorkerDashboard() {
                        </div>
                      )}
                      {currentJob.status === "in_progress" && (
-                        <Button 
-                          onClick={() => completeJob({ jobId: currentJob._id })} 
+                        <Button
+                          onClick={() => completeJob({ jobId: currentJob._id })}
                           className="w-full h-14 bg-green-600 hover:bg-green-700 rounded-2xl font-bold"
                         >
                           إنهاء العمل وصرف المستحقات
@@ -243,17 +243,17 @@ export default function WorkerDashboard() {
                       <h2 className="text-3xl font-bold text-aman-red">زر الاستغاثة SOS</h2>
                       <p className="text-muted-foreground mt-2">اضغط هنا فقط في حالة الخطر الشديد.</p>
                     </div>
-                    <Button 
-                      variant="destructive" 
-                      size="lg" 
+                    <Button
+                      variant="destructive"
+                      size="lg"
                       className="w-full h-20 rounded-2xl font-bold text-2xl shadow-xl shadow-aman-red/20 active:scale-95 transition-transform"
                       onClick={async () => {
                         if (confirm("تأكيد إرسال نداء استغاثة؟")) {
                           setSosTriggered(true);
-                          await triggerSOS({ 
-                            jobId: currentJob?._id, 
-                            lat: currentJob?.workerLocation?.lat ?? 18.0735, 
-                            lng: currentJob?.workerLocation?.lng ?? -15.9582 
+                          await triggerSOS({
+                            jobId: currentJob?._id,
+                            lat: currentJob?.workerLocation?.lat ?? 18.0735,
+                            lng: currentJob?.workerLocation?.lng ?? -15.9582
                           });
                         }
                       }}

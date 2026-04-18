@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 export const getWallet = query({
   args: {},
-  returns: v.union(v.object({ _id: v.id("wallets"), userId: v.id("users"), balance: v.number(), currency: v.string() }), v.null()),
+  returns: v.union(v.object({ _id: v.id("wallets"), userId: v.id("users"), balance: v.number(), currency: v.optional(v.string()) }), v.null()),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
@@ -78,10 +78,8 @@ export const topUp = mutation({
     } else {
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
+        currency: "MRU", // Ensure currency is set on update
       });
-    }
-    if (wallet && (!wallet.currency || wallet.currency !== 'MRU')) {
-      await ctx.db.patch(wallet._id, { currency: 'MRU' });
     }
     if (wallet) {
       await ctx.db.insert("wallet_transactions", {
@@ -93,6 +91,7 @@ export const topUp = mutation({
         timestamp: Date.now(),
       });
     }
+    return null;
   },
 });
 export const creditFunds = internalMutation({
@@ -121,10 +120,8 @@ export const creditFunds = internalMutation({
     } else {
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
+        currency: "MRU",
       });
-    }
-    if (wallet && (!wallet.currency || wallet.currency !== 'MRU')) {
-      await ctx.db.patch(wallet._id, { currency: 'MRU' });
     }
     if (wallet) {
       await ctx.db.insert("wallet_transactions", {
@@ -136,6 +133,7 @@ export const creditFunds = internalMutation({
         timestamp: Date.now(),
       });
     }
+    return null;
   },
 });
 export const deductFunds = internalMutation({
@@ -152,14 +150,12 @@ export const deductFunds = internalMutation({
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .order("asc")
       .take(1))[0];
-    if (wallet && (!wallet.currency || wallet.currency !== 'MRU')) {
-      await ctx.db.patch(wallet._id, { currency: 'MRU' });
-    }
     if (!wallet || wallet.balance < args.amount) {
       throw new Error("رصيد غير كافٍ بالأوقية");
     }
     await ctx.db.patch(wallet._id, {
       balance: wallet.balance - args.amount,
+      currency: "MRU",
     });
     await ctx.db.insert("wallet_transactions", {
       walletId: wallet._id,
@@ -169,6 +165,7 @@ export const deductFunds = internalMutation({
       description: args.description,
       timestamp: Date.now(),
     });
+    return null;
   },
 });
 export const processPayout = internalMutation({
@@ -213,5 +210,6 @@ export const processPayout = internalMutation({
         timestamp: Date.now(),
       });
     }
+    return null;
   },
 });

@@ -9,8 +9,8 @@ const applicationTables = {
     emailVerificationTime: v.optional(v.number()),
     phoneVerificationTime: v.optional(v.number()),
     image: v.optional(v.string()),
-    // Custom Marketplace fields
-    role: v.union(v.literal("client"), v.literal("provider")),
+    // Custom Marketplace fields - made optional to prevent schema validation errors on auth-initiation
+    role: v.optional(v.union(v.literal("client"), v.literal("provider"))),
     phone: v.optional(v.string()),
     specialties: v.optional(v.array(v.string())),
     isVerified: v.optional(v.boolean()),
@@ -20,7 +20,7 @@ const applicationTables = {
   wallets: defineTable({
     userId: v.id("users"),
     balance: v.number(),
-    currency: v.string(),
+    currency: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
   wallet_transactions: defineTable({
     walletId: v.id("wallets"),

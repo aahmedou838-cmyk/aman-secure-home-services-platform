@@ -6,7 +6,15 @@ export const currentUser = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    return await ctx.db.get(userId);
+    const user = await ctx.db.get(userId);
+    if (!user) return null;
+    // Fallback logic for uninitialized roles to keep frontend logic simple
+    return {
+      ...user,
+      role: user.role ?? "client",
+      isVerified: user.isVerified ?? false,
+      specialties: user.specialties ?? [],
+    };
   },
 });
 export const updateProfile = mutation({
