@@ -2,17 +2,54 @@ import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Map, Star, ScrollText, User, Zap, Package, Gift } from "lucide-react";
+import { Map, Star, ScrollText, User, Zap, Package, Gift, Save } from "lucide-react";
 import { Inventory } from "./Inventory";
 import { DailyRewards } from "./DailyRewards";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SignInForm } from "@/components/SignInForm";
+import { Button } from "@/components/ui/button";
 export function HUD() {
   const player = useQuery(api.players.getMe);
+  const user = useQuery(api.profiles.currentUser);
   const activeQuests = useQuery(api.game.listActiveQuests) ?? [];
   const [showInventory, setShowInventory] = useState(false);
   const [showDaily, setShowDaily] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   if (!player) return null;
+  const isGuest = user?.isAnonymous ?? false;
   return (
     <div className="absolute inset-0 pointer-events-none p-6" dir="rtl">
+      {/* Top Center: Guest Mode Warning */}
+      {isGuest && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center justify-center w-full max-w-xs pointer-events-auto">
+          <Dialog open={showSaveModal} onOpenChange={setShowSaveModal}>
+            <DialogTrigger asChild>
+              <motion.button
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-2 px-4 py-2 bg-aman-navy/90 backdrop-blur-md border border-aman-amber/30 rounded-full text-white shadow-2xl"
+              >
+                <div className="w-2 h-2 bg-aman-amber rounded-full animate-pulse" />
+                <span className="text-[10px] font-black">وضع الضيف - سجل لحفظ تقدمك</span>
+                <div className="bg-aman-amber text-aman-navy px-2 py-0.5 rounded-lg text-[10px] font-black flex items-center gap-1">
+                  <Save className="w-3 h-3" />
+                  حفظ
+                </div>
+              </motion.button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md rounded-[2rem]" dir="rtl">
+              <DialogHeader>
+                <DialogTitle className="text-right text-2xl font-black">حفظ التقدم</DialogTitle>
+                <p className="text-right text-muted-foreground text-sm">قم بربط حسابك ببريد إلكتروني لحفظ مستواك ومقتنياتك للأبد.</p>
+              </DialogHeader>
+              <div className="py-4">
+                <SignInForm />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
       {/* Top Left: Player Info */}
       <div className="absolute top-6 left-6 flex items-center gap-4 pointer-events-auto">
         <div className="relative">

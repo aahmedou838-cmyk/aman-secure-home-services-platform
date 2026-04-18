@@ -8,12 +8,15 @@ export const currentUser = query({
     if (!userId) return null;
     const user = await ctx.db.get(userId);
     if (!user) return null;
-    // Fallback logic for uninitialized roles to keep frontend logic simple
+    // Identify if the user is anonymous (guest)
+    // Anonymous users in Convex Auth usually lack an email/phone or specific providers
+    const isAnonymous = !user.email && !user.phone;
     return {
       ...user,
       role: user.role ?? "client",
       isVerified: user.isVerified ?? false,
       specialties: user.specialties ?? [],
+      isAnonymous,
     };
   },
 });
