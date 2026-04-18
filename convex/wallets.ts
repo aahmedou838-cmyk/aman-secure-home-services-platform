@@ -72,7 +72,9 @@ export const topUp = mutation({
         balance: args.amount,
         currency: "MRU",
       });
-      wallet = await ctx.db.get(walletId)!;
+      const newWallet = await ctx.db.get(walletId);
+      if (!newWallet) throw new Error("Failed to retrieve newly created wallet");
+      wallet = newWallet;
     } else {
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,
@@ -113,7 +115,9 @@ export const creditFunds = internalMutation({
         balance: args.amount,
         currency: "MRU",
       });
-      wallet = await ctx.db.get(walletId)!;
+      const newWallet = await ctx.db.get(walletId);
+      if (!newWallet) throw new Error("Failed to retrieve newly created wallet");
+      wallet = newWallet;
     } else {
       await ctx.db.patch(wallet._id, {
         balance: wallet.balance + args.amount,

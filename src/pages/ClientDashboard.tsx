@@ -23,20 +23,24 @@ export default function ClientDashboard() {
       ensureWallet();
     }
   }, [user, wallet, ensureWallet]);
-  const handleRequestService = async () => {
-    if (!wallet || wallet.balance < 200) {
+const handleRequestService = async () => {
+  console.log('🔥 Button Clicked - handleRequestService called');
+  console.log('💰 Wallet check:', { wallet: !!wallet, balance: wallet?.balance, sufficient: wallet && wallet.balance >= 200 });
+  if (!wallet || wallet.balance < 200) {
       toast.error("رصيدك لا يكفي لرسوم المعاينة (200 أ.م)");
       return;
     }
     setLoading(true);
-    try {
-      await createJob({
-        serviceType: "سباكة - كشف تسربات",
-        inspectionFee: 200,
-      });
+  try {
+    console.log('🚀 Attempting to create job with serviceType: سباكة - كشف تسربات, inspectionFee: 200');
+    await createJob({
+      serviceType: "سباكة - كشف تسربات",
+      inspectionFee: 200,
+    });
       toast.success("تم طلب المعاينة بنجاح");
-    } catch (error: any) {
-      toast.error(error.message || "فشل في طلب الخدمة");
+  } catch (error: any) {
+    console.log('❌ Job creation error:', error);
+    toast.error(error.message || "فشل في طلب الخدمة");
     } finally {
       setLoading(false);
     }
