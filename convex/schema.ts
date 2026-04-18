@@ -30,6 +30,26 @@ const applicationTables = {
   })
   .index("by_userId", ["userId"])
   .index("by_zone_active", ["zoneId", "lastActive"]),
+  player_inventory: defineTable({
+    playerId: v.id("players"),
+    itemKey: v.string(),
+    quantity: v.number(),
+    metadata: v.optional(v.record(v.string(), v.any())),
+  })
+  .index("by_player", ["playerId"])
+  .index("by_player_item", ["playerId", "itemKey"]),
+  daily_rewards: defineTable({
+    playerId: v.id("players"),
+    lastClaimed: v.number(),
+    streak: v.number(),
+  })
+  .index("by_player", ["playerId"]),
+  world_regions: defineTable({
+    regionId: v.string(),
+    requiredLevel: v.number(),
+    name: v.string(),
+  })
+  .index("by_regionId", ["regionId"]),
   game_quests: defineTable({
     questId: v.string(),
     title: v.string(),

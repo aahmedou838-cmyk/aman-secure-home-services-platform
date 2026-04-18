@@ -1,11 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
-import { motion } from "framer-motion";
-import { Map, Star, ScrollText, User, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Map, Star, ScrollText, User, Zap, Package, Gift } from "lucide-react";
+import { Inventory } from "./Inventory";
+import { DailyRewards } from "./DailyRewards";
 export function HUD() {
   const player = useQuery(api.players.getMe);
   const activeQuests = useQuery(api.game.listActiveQuests) ?? [];
+  const [showInventory, setShowInventory] = useState(false);
+  const [showDaily, setShowDaily] = useState(false);
   if (!player) return null;
   return (
     <div className="absolute inset-0 pointer-events-none p-6" dir="rtl">
@@ -31,13 +35,30 @@ export function HUD() {
           </div>
         </div>
       </div>
-      {/* Top Right: Minimap */}
-      <div className="absolute top-6 right-6 w-32 h-32 bg-aman-navy/80 backdrop-blur-lg border-2 border-white/20 rounded-3xl overflow-hidden shadow-2xl pointer-events-auto flex items-center justify-center">
-        <Map className="w-8 h-8 text-aman-teal opacity-50" />
-        <motion.div
-          animate={{ x: (player.position.x / 2000) * 100 - 50, y: (player.position.y / 2000) * 100 - 50 }}
-          className="absolute w-2 h-2 bg-aman-red rounded-full shadow-[0_0_10px_red]"
-        />
+      {/* Top Right: Minimap + Controls */}
+      <div className="absolute top-6 right-6 flex flex-col items-end gap-4">
+        <div className="w-32 h-32 bg-aman-navy/80 backdrop-blur-lg border-2 border-white/20 rounded-3xl overflow-hidden shadow-2xl pointer-events-auto flex items-center justify-center">
+          <Map className="w-8 h-8 text-aman-teal opacity-50" />
+          <motion.div
+            animate={{ x: (player.position.x / 2000) * 100 - 50, y: (player.position.y / 2000) * 100 - 50 }}
+            className="absolute w-2 h-2 bg-aman-red rounded-full shadow-[0_0_10px_red]"
+          />
+        </div>
+        <div className="flex flex-col gap-2 pointer-events-auto">
+          <button
+            onClick={() => setShowInventory(true)}
+            className="w-12 h-12 bg-aman-navy/80 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center text-white hover:bg-aman-teal transition-colors shadow-xl"
+          >
+            <Package className="w-6 h-6" />
+          </button>
+          <button
+            onClick={() => setShowDaily(true)}
+            className="w-12 h-12 bg-aman-navy/80 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center text-white hover:bg-aman-teal transition-colors shadow-xl relative"
+          >
+            <Gift className="w-6 h-6" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-aman-red rounded-full animate-pulse border-2 border-aman-navy" />
+          </button>
+        </div>
       </div>
       {/* Bottom Left: Quest Tracker */}
       <div className="absolute bottom-8 left-6 pointer-events-auto">
@@ -67,11 +88,16 @@ export function HUD() {
           </div>
         </motion.div>
       </div>
-      {/* Floating Secrets Counter */}
-      <div className="absolute top-24 right-6 flex items-center gap-2 bg-aman-amber/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-aman-amber/30 pointer-events-auto">
+      {/* Floating XP Counter */}
+      <div className="absolute top-24 right-20 flex items-center gap-2 bg-aman-amber/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-aman-amber/30 pointer-events-auto">
         <Star className="w-4 h-4 text-aman-amber fill-aman-amber" />
         <span className="text-xs font-black text-aman-amber">{player.xp} خبرة</span>
       </div>
+      {/* Modals */}
+      <AnimatePresence>
+        {showInventory && <Inventory onClose={() => setShowInventory(false)} />}
+        {showDaily && <DailyRewards onClose={() => setShowDaily(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
