@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Home, User, Briefcase, Wallet, Shield, Loader2 } from "lucide-react";
+import { Home, User, Briefcase, Wallet, Shield, Loader2, BadgeCheck } from "lucide-react";
 import { Authenticated, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -8,29 +8,33 @@ import { SignOutButton } from "@/components/SignOutButton";
 function NavContent() {
   const { pathname } = useLocation();
   const wallet = useQuery(api.wallets.getWallet);
+  const user = useQuery(api.users.currentUser);
   const navItems = [
     { label: "الرئيسية", path: "/", icon: Home },
-    { label: "داشبورد العميل", path: "/client-dashboard", icon: User },
-    { label: "داشبورد العامل", path: "/worker-dashboard", icon: Briefcase },
-    { label: "الملف الشخصي", path: "/profile", icon: Shield },
+    { label: "العميل", path: "/client-dashboard", icon: User },
+    { label: "الفني", path: "/worker-dashboard", icon: Briefcase },
+    { label: "الملف", path: "/profile", icon: Shield },
   ];
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-[60] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-aman-teal rounded-lg flex items-center justify-center text-white">
-                <Shield className="w-5 h-5" />
+              <div className="w-10 h-10 bg-aman-teal rounded-xl flex items-center justify-center text-white shadow-lg shadow-aman-teal/20">
+                <Shield className="w-6 h-6" />
               </div>
-              <span className="text-xl font-bold text-aman-teal">أمان موريتانيا</span>
+              <div className="hidden sm:block">
+                <span className="text-2xl font-black text-aman-teal">أمان</span>
+                <span className="text-xs block text-muted-foreground -mt-1 font-bold">موريتانيا</span>
+              </div>
             </Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Authenticated>
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-aman-teal/10 rounded-full border border-aman-teal/20">
+              <div className="flex items-center gap-2 px-4 py-2 bg-aman-navy text-white rounded-2xl shadow-md border border-white/10">
                 <Wallet className="w-4 h-4 text-aman-teal" />
-                <span className="text-sm font-semibold text-aman-teal">
+                <span className="text-sm font-black">
                   {wallet === undefined ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
@@ -38,8 +42,14 @@ function NavContent() {
                   )}
                 </span>
               </div>
-              <Link to="/profile" className="hidden md:flex p-2 hover:bg-muted rounded-full transition-colors">
-                <User className="w-5 h-5" />
+              {user?.role === "provider" && (
+                <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-aman-teal/10 rounded-full border border-aman-teal/20 text-aman-teal">
+                  <BadgeCheck className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-tighter">فني معتمد</span>
+                </div>
+              )}
+              <Link to="/profile" className="hidden sm:flex w-10 h-10 items-center justify-center bg-muted hover:bg-muted/80 rounded-xl transition-all">
+                <User className="w-5 h-5 text-muted-foreground" />
               </Link>
               <SignOutButton />
             </Authenticated>
@@ -47,14 +57,13 @@ function NavContent() {
           </div>
         </div>
       </header>
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8 md:py-10 lg:py-12">
-            <Outlet />
-          </div>
+      <main className="flex-1 pb-24 md:pb-0">
+        <div className="max-w-7xl mx-auto">
+          <Outlet />
         </div>
       </main>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t px-4 py-3 pb-safe">
+      {/* Responsive Bottom Nav for Mobile */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-background/90 backdrop-blur-xl border-t px-6 py-4 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <div className="flex justify-around items-center">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -63,12 +72,14 @@ function NavContent() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-1 transition-colors ${
-                  isActive ? "text-aman-teal font-bold" : "text-muted-foreground"
+                className={`flex flex-col items-center gap-1.5 transition-all active:scale-90 ${
+                  isActive ? "text-aman-teal font-black" : "text-muted-foreground opacity-60"
                 }`}
               >
-                <Icon className="w-6 h-6" />
-                <span className="text-xs">{item.label}</span>
+                <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-aman-teal/10' : ''}`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-bold">{item.label}</span>
               </Link>
             );
           })}

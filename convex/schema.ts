@@ -2,10 +2,18 @@ import { defineSchema, defineTable } from "convex/server";
 import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 const applicationTables = {
+  users: defineTable({
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    image: v.optional(v.string()),
+    role: v.union(v.literal("client"), v.literal("provider")),
+    phone: v.optional(v.string()),
+    specialties: v.optional(v.array(v.string())),
+  }).index("by_role", ["role"]),
   wallets: defineTable({
     userId: v.id("users"),
     balance: v.number(),
-    currency: v.string(), // Default changed to "MRU" (Mauritanian Ouguiya)
+    currency: v.string(),
   }).index("by_userId", ["userId"]),
   wallet_transactions: defineTable({
     walletId: v.id("wallets"),
@@ -48,6 +56,7 @@ const applicationTables = {
       v.literal("cancelled")
     ),
     serviceType: v.string(),
+    providerSpecialtiesRequired: v.array(v.string()),
     inspectionFee: v.number(),
     quoteAmount: v.optional(v.number()),
     workerLocation: v.optional(
@@ -57,7 +66,7 @@ const applicationTables = {
         lastUpdated: v.number(),
       })
     ),
-    penaltyTier: v.optional(v.number()), // 1-5 level penalty system
+    penaltyTier: v.optional(v.number()),
     isPaid: v.optional(v.boolean()),
     createdAt: v.number(),
   })
