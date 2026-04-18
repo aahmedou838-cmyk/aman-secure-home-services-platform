@@ -15,7 +15,9 @@ export function GameCanvas() {
   const currentRegionId = player?.zoneId || "starter_zone";
   const regionData = WORLD_DATA[currentRegionId as keyof typeof WORLD_DATA];
   const rawOthers = useQuery(api.players.getActivePlayers, { zoneId: currentRegionId });
-  const whispers = useQuery(api.game.getWhispers, { zoneId: currentRegionId }) ?? [];
+  // Memoize whispers to ensure stable reference for dependency arrays
+  const rawWhispers = useQuery(api.game.getWhispers, { zoneId: currentRegionId });
+  const whispers = useMemo(() => rawWhispers ?? [], [rawWhispers]);
   const others = useMemo(() => rawOthers ?? [], [rawOthers]);
   const updatePos = useMutation(api.players.updatePosition);
   const [pos, setPos] = useState({ x: 500, y: 500 });
@@ -183,6 +185,10 @@ export function GameCanvas() {
     renderFrame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(renderFrame);
   }, [pos, others, whispers, player?.userId, currentRegionId, regionData, particles]);
+  // Stable callback for InteractionUI
+  const handleReadWhisper = useCallback((whisper: Doc<"whispering_stones">) => {
+    setSelectedWhisper(whisper);
+  }, []);
   return (
     <div className="w-full h-full relative touch-none select-none">
       <canvas
@@ -191,9 +197,9 @@ export function GameCanvas() {
       />
       <HUD />
       <Joystick onMove={setVelocity} />
-      <InteractionUI 
-        npc={nearestNPC} 
-        onReadWhisper={(whisper) => setSelectedWhisper(whisper)}
+      <InteractionUI
+        npc={nearestNPC}
+        onReadWhisper={handleReadWhisper}
       />
       {selectedPlayerId && (
         <SocialCard
@@ -202,10 +208,10 @@ export function GameCanvas() {
         />
       )}
       {selectedWhisper && (
-        <WhisperUI 
-          readOnly 
-          whisper={selectedWhisper} 
-          onClose={() => setSelectedWhisper(null)} 
+        <WhisperUI
+          readOnly
+          whisper={selectedWhisper}
+          onClose={() => setSelectedWhisper(null)}
         />
       )}
       <AnimatePresence>

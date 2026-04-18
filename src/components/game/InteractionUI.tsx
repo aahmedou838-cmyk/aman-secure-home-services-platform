@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Box, Lock, Sparkles } from "lucide-react";
 import { NPC, WORLD_DATA } from "@/lib/gameConstants";
@@ -17,7 +17,9 @@ export function InteractionUI({ npc, onReadWhisper }: InteractionUIProps) {
   const player = useQuery(api.players.getMe);
   const currentRegionId = player?.zoneId || "starter_zone";
   const regionData = WORLD_DATA[currentRegionId as keyof typeof WORLD_DATA];
-  const whispers = useQuery(api.game.getWhispers, { zoneId: currentRegionId }) ?? [];
+  // Memoize whispers to ensure stable reference for proximity detection
+  const rawWhispers = useQuery(api.game.getWhispers, { zoneId: currentRegionId });
+  const whispers = useMemo(() => rawWhispers ?? [], [rawWhispers]);
   const [nearestObj, setNearestObj] = useState<{ id: string, type: string, label: string } | null>(null);
   const [nearestWhisper, setNearestWhisper] = useState<Doc<"whispering_stones"> | null>(null);
   useEffect(() => {
