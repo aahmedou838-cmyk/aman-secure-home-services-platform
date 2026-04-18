@@ -18,6 +18,7 @@ import { HomePage } from '@/pages/HomePage'
 import ClientDashboard from '@/pages/ClientDashboard'
 import WorkerDashboard from '@/pages/WorkerDashboard'
 import ProfilePage from '@/pages/ProfilePage'
+import CharacterSelectPage from '@/pages/CharacterSelectPage'
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: "/client-dashboard", element: <ClientDashboard /> },
       { path: "/worker-dashboard", element: <WorkerDashboard /> },
       { path: "/profile", element: <ProfilePage /> },
+      { path: "/character-select", element: <CharacterSelectPage /> },
     ],
   },
 ]);

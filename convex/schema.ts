@@ -8,32 +8,37 @@ const applicationTables = {
     emailVerificationTime: v.optional(v.number()),
     phoneVerificationTime: v.optional(v.number()),
     image: v.optional(v.string()),
-    role: v.optional(v.union(v.literal("client"), v.literal("provider"))),
+    role: v.optional(v.union(v.literal("client"), v.literal("provider"), v.literal("player"))),
     phone: v.optional(v.string()),
     specialties: v.optional(v.array(v.string())),
     isVerified: v.optional(v.boolean()),
   })
   .index("by_email", ["email"])
   .index("by_role", ["role"]),
-  providers_listings: defineTable({
-    providerId: v.id("users"),
-    category: v.union(v.literal("freelance"), v.literal("transport"), v.literal("marketplace")),
-    subcategory: v.string(),
-    title: v.string(),
-    description: v.string(),
-    price: v.number(),
-    location: v.object({
-      lat: v.number(),
-      lng: v.number(),
+  players: defineTable({
+    userId: v.id("users"),
+    nickname: v.string(),
+    avatarIndex: v.number(),
+    level: v.number(),
+    xp: v.number(),
+    position: v.object({
+      x: v.number(),
+      y: v.number(),
     }),
-    images: v.optional(v.array(v.id("_storage"))),
-    active: v.boolean(),
-    createdAt: v.number(),
+    lastActive: v.number(),
+    zoneId: v.string(),
   })
-  .index("by_providerId", ["providerId"])
-  .index("by_category_active", ["category", "active"])
-  .index("by_subcategory_active", ["subcategory", "active"])
-  .index("by_providerId_active", ["providerId", "active"]),
+  .index("by_userId", ["userId"])
+  .index("by_zone_active", ["zoneId", "lastActive"]),
+  player_quests: defineTable({
+    playerId: v.id("players"),
+    questId: v.string(),
+    status: v.union(v.literal("available"), v.literal("active"), v.literal("completed")),
+    progress: v.number(),
+    updatedAt: v.number(),
+  })
+  .index("by_player", ["playerId"])
+  .index("by_player_quest", ["playerId", "questId"]),
   notifications: defineTable({
     toUserId: v.id("users"),
     fromJobId: v.optional(v.id("jobs")),
@@ -90,7 +95,7 @@ const applicationTables = {
       v.literal("completed"),
       v.literal("cancelled")
     ),
-    serviceType: v.string(), // This maps to subcategory
+    serviceType: v.string(),
     category: v.optional(v.union(v.literal("freelance"), v.literal("transport"), v.literal("marketplace"))),
     publicFeed: v.optional(v.boolean()),
     providerSpecialtiesRequired: v.array(v.string()),
@@ -123,6 +128,25 @@ const applicationTables = {
   })
     .index("by_worker", ["workerId"])
     .index("by_resolved", ["resolved"]),
+  providers_listings: defineTable({
+    providerId: v.id("users"),
+    category: v.union(v.literal("freelance"), v.literal("transport"), v.literal("marketplace")),
+    subcategory: v.string(),
+    title: v.string(),
+    description: v.string(),
+    price: v.number(),
+    location: v.object({
+      lat: v.number(),
+      lng: v.number(),
+    }),
+    images: v.optional(v.array(v.id("_storage"))),
+    active: v.boolean(),
+    createdAt: v.number(),
+  })
+  .index("by_providerId", ["providerId"])
+  .index("by_category_active", ["category", "active"])
+  .index("by_subcategory_active", ["subcategory", "active"])
+  .index("by_providerId_active", ["providerId", "active"]),
 };
 export default defineSchema({
   ...authTables,
